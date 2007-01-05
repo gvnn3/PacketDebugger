@@ -92,46 +92,90 @@ class Command(cmd.Cmd):
 
     This class uses the built in command interpreter from Python to
     build up the full set of commands implemented by the debugger.
-    Each command is written as a do_xxx function in this class"""
+    Each command is written as a do_xxx function in this class
+
+    Each command takes a string which should be parsed as arguments.
+
+    Help follows the command."""
 
     def do_quit(self, message):
+        print "Bye"
+        sys.exit()
+
+    def help_quit(self):
         print "Bye"
         sys.exit()
 
     def do_create(self, args):
         print "create stream"
 
+    def help_create(self):
+        print "create stream"
+
     def do_delete(self, args):
+        print "delete stream"
+
+    def help_delete(self):
         print "delete stream"
 
     def do_run(self, args):
         print "run stream"
 
+    def help_run(self):
+        print "run stream"
+
     def do_list(self, args):
+        print "list packets"
+
+    def help_list(self):
         print "list packets"
 
     def do_print(self, args):
         print "print packet"
 
+    def help_print(self,):
+        print "print packet"
+
     def do_send(self, args):
+        print "send packet"
+
+    def help_send(self):
         print "send packet"
 
     def do_set(self, args):
         print "set"
 
+    def help_set(self):
+        print "set"
+
     def do_break(self, args):
+        print "set breakpoint"
+
+    def help_break(self):
         print "set breakpoint"
 
     def do_continue(self, args):
         print "continue"
 
+    def help_continue(self):
+        print "continue"
+
     def do_next(self, args):
+        print "next"
+
+    def help_next(self):
         print "next"
 
     def do_prev(self, args):
         print "prev"
 
+    def help_prev(self):
+        print "prev"
+
     def do_info(self, args):
+        print "info"
+
+    def help_info(self):
         print "info"
 
 
