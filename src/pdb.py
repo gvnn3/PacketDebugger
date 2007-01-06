@@ -41,8 +41,9 @@
 import sys
 import cmd  # Used to implement our CLI
 
+sys.path.insert(0, ".") # Look locally first.
 # Import all of the datatypes we need for the debugger.
-from pdb import *
+import pdb.packetstream
 
 streams = []  # The list of streams we're working with.
 
@@ -80,6 +81,11 @@ def main():
 
 
     user_opts = Options()
+
+    # Read in stream 0
+
+    print pdb
+    streams[0] = Stream(options.filename)
 
     # Jump into the cli
 

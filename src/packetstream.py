@@ -36,18 +36,75 @@
 # for the packet debugger.  The user interacts with streams in order
 # to read, write and manipulate packets.
 
-class PacketStream(object):
+from pcs import *
+
+class InitError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return repr(self.message)
+
+class Stream(object):
 
     # Per stream data
 
     breakpoints = () # a list of integers which are breakpoints for the stream
-    file = ""        # The file or device we are working with.
+    file = None        # The file or device we are working with.
     filter = ""      # A filter passed into the pcap/bpf system for
                      # filtering the packets we receive
     packets = None   # The packets we are examining.
     position = -1    # Our current location in the packet array/stream
     type = None      # Either Capture or a Playback stream.
     lock = None # A lock for use by threading code (not used yet)
+    options = None   # The options 
 
-    def __init__(self):
+    def __init__(self, options, filename=None, interface=None):
+        """Initialize a packet stream.
+
+        A packet stream can be read from a pcap file or it can be
+        taken live from an interface.  Either or, but not both, must
+        be supplied.  A pcap dump file is read in completely once it
+        is opened and is then available to the system."""
+
+        if filename == None && interface == None:
+            raise InitError, "Must supply a file or an interface"
+        if filename != None && interface != None:
+            raise InitError, "Cannot supply both a file AND an interface"
+        options = options
+
+        if (interface != None):
+            raise InitError, "Live capture not supported"
+
+        if (filename != None):
+            try:
+                self.file = pcs.PcapConnector(filename)
+            except:
+                raise InitError, "Cannot open pcap file %s" % filename
+            
+        while not done:
+            try:
+                packet = self.file.read()
+            except:
+                done = True
+            self.packets.append(packet)
+
+        self.file.close()
+        self.position = 0
+
+    def run(self):
         pass
+
+    def list(self):
+        """List the packets in the stream."""
+        if (self.position + options.list_length) > len(self.packets):
+            end = len(self.packets)
+        else:
+            end = self.position + options.list_length
+        
+        for packet in self.packets[self.position:end]:
+            display(packet)
+
+    def display(self, packet):
+        """Method for displaying packets."""
+        print packet
+    
