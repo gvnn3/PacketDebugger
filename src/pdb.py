@@ -43,16 +43,22 @@ import cmd  # Used to implement our CLI
 
 sys.path.insert(0, ".") # Look locally first.
 # Import all of the datatypes we need for the debugger.
-import pdb.packetstream
+import packetstream
 
 streams = []  # The list of streams we're working with.
+current = 0   # The current stream number
+options = None  # Global pointer to all options for the program
 
 class Options(object):
 
     list_length = 10 # How many lines to list before and after this one.
+    layer = -1     # Pick a layer to display, None is all layers
 
     def __init__(self):
         pass
+
+    def __repr__(self):
+        return "list_length = %d\nlayer = %d\n" % (self.list_length, self.layer)
 
 def main():
     """The Packet Debugger
@@ -76,16 +82,13 @@ def main():
     parser.add_option("-i", "--interface", dest="interface",
                       help="Network interface to connect to.")
 
-    (options, args) = parser.parse_args() 
+    (cmdln_options, args) = parser.parse_args() 
     
-
-
-    user_opts = Options()
+    global options
+    options = Options()
 
     # Read in stream 0
-
-    print pdb
-    streams[0] = Stream(options.filename)
+    streams.append(packetstream.Stream(options, cmdln_options.filename))
 
     # Jump into the cli
 
@@ -103,6 +106,8 @@ class Command(cmd.Cmd):
     Each command takes a string which should be parsed as arguments.
 
     Help follows the command."""
+
+    global options
 
     def do_quit(self, message):
         print "Bye"
@@ -131,7 +136,7 @@ class Command(cmd.Cmd):
         print "run stream"
 
     def do_list(self, args):
-        print "list packets"
+        streams[current].list()
 
     def help_list(self):
         print "list packets"
@@ -149,10 +154,31 @@ class Command(cmd.Cmd):
         print "send packet"
 
     def do_set(self, args):
-        print "set"
+        if len(args) <= 0:
+            self.help_set()
+            return
+        try:
+            (key, value) = args.split()
+        except:
+            self.help_set()
 
+        if key == "list_length":
+            options.list_length = value
+        elif key == "layer":
+            value = int(value)
+            if value < 0:
+                options.layer = None
+            if value > 7:
+                self.help_set()
+            else:
+                options.layer = value
+        
     def help_set(self):
-        print "set"
+        print "set option value\n\noptions: list_length - how many packets to list at one time.\n         layer - ISO layer to show, -1 shows all"
+
+    def do_show(self, args):
+        """Show the current options that are set."""
+        print options
 
     def do_break(self, args):
         print "set breakpoint"

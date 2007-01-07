@@ -36,7 +36,8 @@
 # for the packet debugger.  The user interacts with streams in order
 # to read, write and manipulate packets.
 
-from pcs import *
+import pcs
+import pcap
 
 class InitError(Exception):
     def __init__(self, message):
@@ -48,14 +49,15 @@ class Stream(object):
 
     # Per stream data
 
-    breakpoints = () # a list of integers which are breakpoints for the stream
-    file = None        # The file or device we are working with.
+    breakpoints = [] # a list of integers which are breakpoints for the stream
+    file = None      # The file or device we are working with.
     filter = ""      # A filter passed into the pcap/bpf system for
                      # filtering the packets we receive
-    packets = None   # The packets we are examining.
+    packets = []     # The packets we are examining.
     position = -1    # Our current location in the packet array/stream
     type = None      # Either Capture or a Playback stream.
-    lock = None # A lock for use by threading code (not used yet)
+    lock = None      # A lock for use by threading code (not used yet)
+    layer = 0        # What ISO layer does this stream start at
     options = None   # The options 
 
     def __init__(self, options, filename=None, interface=None):
@@ -66,11 +68,11 @@ class Stream(object):
         be supplied.  A pcap dump file is read in completely once it
         is opened and is then available to the system."""
 
-        if filename == None && interface == None:
+        if filename == None and interface == None:
             raise InitError, "Must supply a file or an interface"
-        if filename != None && interface != None:
+        if filename != None and interface != None:
             raise InitError, "Cannot supply both a file AND an interface"
-        options = options
+        self.options = options
 
         if (interface != None):
             raise InitError, "Live capture not supported"
@@ -81,30 +83,61 @@ class Stream(object):
             except:
                 raise InitError, "Cannot open pcap file %s" % filename
             
-        while not done:
-            try:
-                packet = self.file.read()
-            except:
-                done = True
-            self.packets.append(packet)
+            done = False
+            packet = None
+            while not done:
+                try:
+                    packet = self.file.readpkt()
+                except:
+                    done = True
+                
+                self.packets.append(packet)
+# XXX FIX PCS                self.file.close()
+            self.position = 0
 
-        self.file.close()
-        self.position = 0
+            if self.file.dlink == pcap.DLT_EN10MB:
+                layer = 2
+            else:         # Default case
+                layer = 3 # Network and above
 
     def run(self):
         pass
 
     def list(self):
         """List the packets in the stream."""
-        if (self.position + options.list_length) > len(self.packets):
+        if (self.position + self.options.list_length) > len(self.packets):
             end = len(self.packets)
         else:
-            end = self.position + options.list_length
+            end = self.position + self.options.list_length
         
+        index = 0
         for packet in self.packets[self.position:end]:
-            display(packet)
+            self.display(index, packet)
+            index+=1
 
-    def display(self, packet):
+    def display(self, index, packet):
         """Method for displaying packets."""
-        print packet
-    
+        if (self.options.layer == -1):
+            print "%d: %s" % (index, packet.println())
+            while True:
+                try: 
+                    packet = packet.data
+                except:
+                    return
+                print "\t%s" % packet.println()
+        else:
+            if self.options.layer < self.layer:
+                return
+            if self.options.layer == self.layer:
+                print "%d: %s" % (index, packet.println())
+                return
+            skip = self.options.layer - self.layer
+            while skip > 0:
+                try:
+                    packet = packet.data 
+                except:
+                    return
+                skip-= 1
+            print "%d: %s" % (index, packet.println())
+
+                
