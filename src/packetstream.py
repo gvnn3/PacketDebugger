@@ -110,21 +110,27 @@ class Stream(object):
         else:
             end = self.position + self.options.list_length
         
-        index = 0
+        index = self.position
         for packet in self.packets[self.position:end]:
             self.display(index, packet)
+            print
             index+=1
 
     def display(self, index, packet):
         """Method for displaying packets."""
+        if packet == None:
+            print "%d: Unknown Packet"
+            return
         if (self.options.layer == -1):
             print "%d: %s" % (index, packet.println())
             while True:
-                try: 
+                try:
                     packet = packet.data
                 except:
                     return
-                print "\t%s" % packet.println()
+                if (packet == None):
+                    return
+                print "  %s" % packet.println()
         else:
             if self.options.layer < self.layer:
                 return
@@ -138,6 +144,18 @@ class Stream(object):
                 except:
                     return
                 skip-= 1
+                if (packet == None):
+                    return
             print "%d: %s" % (index, packet.println())
 
-                
+    def next(self):
+        """Move to the next packet"""
+        if ((self.position + 1) > len(self.packets)):
+            return
+        self.position += 1
+
+    def prev(self):
+        """Move to the previous packet."""
+        if (self.position <= 0):
+            return
+        self.position -= 1

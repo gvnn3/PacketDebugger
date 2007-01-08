@@ -163,7 +163,7 @@ class Command(cmd.Cmd):
             self.help_set()
 
         if key == "list_length":
-            options.list_length = value
+            options.list_length = int(value)
         elif key == "layer":
             value = int(value)
             if value < 0:
@@ -193,13 +193,15 @@ class Command(cmd.Cmd):
         print "continue"
 
     def do_next(self, args):
-        print "next"
+        """Move to the next packet"""
+        streams[current].next()
 
     def help_next(self):
         print "next"
 
     def do_prev(self, args):
-        print "prev"
+        """Move to the previous packet"""
+        streams[current].prev()
 
     def help_prev(self):
         print "prev"
