@@ -46,7 +46,7 @@ sys.path.insert(0, ".") # Look locally first.
 import packetstream
 
 streams = []  # The list of streams we're working with.
-current = 0   # The current stream number
+current = None   # The current stream number
 options = None  # Global pointer to all options for the program
 
 class Options(object):
@@ -89,7 +89,9 @@ def main():
 
     # Read in stream 0
     streams.append(packetstream.Stream(options, cmdln_options.filename))
-
+    global current
+    current = streams[0]
+    
     # Jump into the cli
 
     cli = Command()
@@ -107,8 +109,8 @@ class Command(cmd.Cmd):
 
     Help follows the command."""
 
-    global options
-
+    global current
+    
     def do_quit(self, message):
         print "Bye"
         sys.exit()
@@ -118,11 +120,32 @@ class Command(cmd.Cmd):
         sys.exit()
 
     def do_create(self, args):
-        print "create stream"
+        """Create a new stream from a file or network interface.
 
+        Acceptable argument lists are:
+        file filename
+        interface interfacename
+        """
+        global current
+        try:
+            arg_list = args.split()
+        except:
+            self.help_create()
+            return
+        if (len(arg_list) != 2):
+            self.help_create()
+            return
+        current.list()
+        print current
+        current = packetstream.Stream(options, arg_list[1])
+        print current
+        current.list()
+        streams.append(current)
+        
     def help_create(self):
-        print "create stream"
-
+        print "create file|interface filename|interface name"
+        print "Create a new stream from a file or a network interface."
+        
     def do_delete(self, args):
         print "delete stream"
 
@@ -136,7 +159,8 @@ class Command(cmd.Cmd):
         print "run stream"
 
     def do_list(self, args):
-        streams[current].list()
+        print current
+        current.list()
 
     def help_list(self):
         print "list packets"
@@ -154,6 +178,7 @@ class Command(cmd.Cmd):
         print "send packet"
 
     def do_set(self, args):
+        global current
         if len(args) <= 0:
             self.help_set()
             return
@@ -172,9 +197,21 @@ class Command(cmd.Cmd):
                 self.help_set()
             else:
                 options.layer = value
+        elif key == "current":
+            value = int(value)
+            if value < 0:
+                print "Must be greater than 0"
+                self.help_set()
+                return
+            if value >= len(streams):
+                print "Must be less than %d" % (len(streams) - 1)
+                self.help_set()
+                return
+            else:
+                current = streams[value]
         
     def help_set(self):
-        print "set option value\n\noptions: list_length - how many packets to list at one time.\n         layer - ISO layer to show, -1 shows all"
+        print "set option value\n\noptions: list_length - how many packets to list at one time.\n         layer - ISO layer to show, -1 shows all\n         current - set the current stream we're inspecting [0..n]"
 
     def do_show(self, args):
         """Show the current options that are set."""
@@ -194,23 +231,49 @@ class Command(cmd.Cmd):
 
     def do_next(self, args):
         """Move to the next packet"""
-        streams[current].next()
+        if (len(args) > 0):
+            if (type(args) != str):
+                print "N must be a number"
+                self.help_next()
+                return
+            if (args.isdigit() != True):
+                print "N must be a number"
+                self.help_next()
+                return
+            current.next(args)
+        else:
+            current.next(None)
 
     def help_next(self):
-        print "next"
+        print "next (N)"
+        print "Move to the next packet in the list.  With a numeric argument, N, move N packets ahead in the list."
 
     def do_prev(self, args):
         """Move to the previous packet"""
-        streams[current].prev()
+        if (len(args) > 0):
+            if (type(args) != str):
+                print "N must be a number"
+                self.help_next()
+                return
+            if (args.isdigit() != True):
+                print "N must be a number"
+                self.help_next()
+                return
+            current.prev(args)
+        else:
+            current.prev(None)
 
     def help_prev(self):
-        print "prev"
+        print "prev (N)"
+        print "Move to the previous packet in the list.  With a numeric argument, N, move N packets back in the list."
 
     def do_info(self, args):
-        print "info"
+        print "Stream %d" % streams.index(current)
+        print "---------"
+        print current
 
     def help_info(self):
-        print "info"
+        print "Print out all the information on the current stream."
 
 
 # The canonical way to start a Python script.  Keep at the end.

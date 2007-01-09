@@ -100,6 +100,20 @@ class Stream(object):
             else:         # Default case
                 layer = 3 # Network and above
 
+    def __str__(self):
+        retval = ""
+        retval += "Breakpoints\n"
+        retval += "File\n"
+        retval += "Filter\n"
+        retval += "Number of packets: %d\n" % len(self.packets)
+        retval += "Current Positon: %d\n" % self.position
+        retval += "Type\n"
+        retval += "Layer: %d" % self.layer
+        return retval
+
+    def __repr__(self):
+        return "<pdb.Stream bp, file, filter, numpkts %d, position %d, type, layer %d>" % (len(self.packets), self.position, self.layer)
+
     def run(self):
         pass
 
@@ -148,14 +162,23 @@ class Stream(object):
                     return
             print "%d: %s" % (index, packet.println())
 
-    def next(self):
+    def next(self, arg):
         """Move to the next packet"""
-        if ((self.position + 1) > len(self.packets)):
-            return
-        self.position += 1
+        jump = 1
+        if (arg != None):
+            jump = int(arg)
+        if ((self.position + jump) > len(self.packets)):
+            print "Distance %d is too far" % jump
+            return 
+        self.position += jump
 
-    def prev(self):
+    def prev(self, arg):
         """Move to the previous packet."""
+        jump = 1
+        if (arg != None):
+            jump = int(arg)
         if (self.position <= 0):
+            print "Distance %d is too far" % jump
             return
-        self.position -= 1
+        self.position -= jump
+
