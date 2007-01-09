@@ -46,7 +46,7 @@ sys.path.insert(0, ".") # Look locally first.
 import packetstream
 
 streams = []  # The list of streams we're working with.
-current = None   # The current stream number
+current = None  # The current stream number
 options = None  # Global pointer to all options for the program
 
 class Options(object):
@@ -109,8 +109,6 @@ class Command(cmd.Cmd):
 
     Help follows the command."""
 
-    global current
-    
     def do_quit(self, message):
         print "Bye"
         sys.exit()
@@ -135,13 +133,10 @@ class Command(cmd.Cmd):
         if (len(arg_list) != 2):
             self.help_create()
             return
-        current.list()
-        print current
+
         current = packetstream.Stream(options, arg_list[1])
-        print current
-        current.list()
         streams.append(current)
-        
+
     def help_create(self):
         print "create file|interface filename|interface name"
         print "Create a new stream from a file or a network interface."
@@ -159,7 +154,6 @@ class Command(cmd.Cmd):
         print "run stream"
 
     def do_list(self, args):
-        print current
         current.list()
 
     def help_list(self):
@@ -178,7 +172,6 @@ class Command(cmd.Cmd):
         print "send packet"
 
     def do_set(self, args):
-        global current
         if len(args) <= 0:
             self.help_set()
             return
@@ -198,6 +191,7 @@ class Command(cmd.Cmd):
             else:
                 options.layer = value
         elif key == "current":
+            global current
             value = int(value)
             if value < 0:
                 print "Must be greater than 0"

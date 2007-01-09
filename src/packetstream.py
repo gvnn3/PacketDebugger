@@ -46,10 +46,7 @@ class InitError(Exception):
         return repr(self.message)
 
 class Stream(object):
-
-    # Per stream data
-
-    breakpoints = [] # a list of integers which are breakpoints for the stream
+    """breakpoints = [] 
     file = None      # The file or device we are working with.
     filter = ""      # A filter passed into the pcap/bpf system for
                      # filtering the packets we receive
@@ -59,6 +56,7 @@ class Stream(object):
     lock = None      # A lock for use by threading code (not used yet)
     layer = 0        # What ISO layer does this stream start at
     options = None   # The options 
+    """
 
     def __init__(self, options, filename=None, interface=None):
         """Initialize a packet stream.
@@ -67,6 +65,16 @@ class Stream(object):
         taken live from an interface.  Either or, but not both, must
         be supplied.  A pcap dump file is read in completely once it
         is opened and is then available to the system."""
+
+        # Set up all known data in a common place
+        self.breakpoints = [] 
+        self.file = None
+        self.filter = ""
+        self.packets = []
+        self.position = -1
+        self.type = None
+        self.lock = None
+        self.layer = 0
 
         if filename == None and interface == None:
             raise InitError, "Must supply a file or an interface"
@@ -106,7 +114,7 @@ class Stream(object):
         retval += "File\n"
         retval += "Filter\n"
         retval += "Number of packets: %d\n" % len(self.packets)
-        retval += "Current Positon: %d\n" % self.position
+        retval += "Current Position: %d\n" % self.position
         retval += "Type\n"
         retval += "Layer: %d" % self.layer
         return retval
