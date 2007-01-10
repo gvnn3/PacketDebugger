@@ -39,15 +39,11 @@
 # system is installed.
 
 import sys
-import cmd  # Used to implement our CLI
+import cli
 
 sys.path.insert(0, ".") # Look locally first.
 # Import all of the datatypes we need for the debugger.
 import packetstream
-
-streams = []  # The list of streams we're working with.
-current = None  # The current stream number
-options = None  # Global pointer to all options for the program
 
 class Options(object):
 
@@ -84,246 +80,21 @@ def main():
 
     (cmdln_options, args) = parser.parse_args() 
     
-    global options
     options = Options()
 
     # Read in stream 0
+    streams = []  # The list of streams we're working with.
+    current = None  # The current stream number
+
     streams.append(packetstream.Stream(options, cmdln_options.filename))
-    global current
     current = streams[0]
     
     # Jump into the cli
 
-    cli = Command()
+    pdbcli = cli.Command(current, options, streams)
 
-    cli.cmdloop()
+    pdbcli.cmdloop()
     
-class Command(cmd.Cmd):
-    """The Command Line Interpreter for the packet debugger.
-
-    This class uses the built in command interpreter from Python to
-    build up the full set of commands implemented by the debugger.
-    Each command is written as a do_xxx function in this class
-
-    Each command takes a string which should be parsed as arguments.
-
-    Help follows the command."""
-
-    def do_quit(self, message):
-        print "Bye"
-        sys.exit()
-
-    def help_quit(self):
-        print "Bye"
-        sys.exit()
-
-    def do_create(self, args):
-        """Create a new stream from a file or network interface.
-
-        Acceptable argument lists are:
-        file filename
-        interface interfacename
-        """
-        global current
-        try:
-            arg_list = args.split()
-        except:
-            self.help_create()
-            return
-        if (len(arg_list) != 2):
-            self.help_create()
-            return
-
-        current = packetstream.Stream(options, arg_list[1])
-        streams.append(current)
-
-    def help_create(self):
-        print "create file|interface filename|interface name"
-        print "Create a new stream from a file or a network interface."
-        
-    def do_delete(self, args):
-        """Delete a stream.  If N is present delete that stream."""
-        global current
-        if ((current == None) or (len(streams) <= 0)):
-            print "No streams.  Use the create command to create one."
-            return
-        if (len(args) > 0):
-            if (type(args) != str):
-                print "N must be a number"
-                self.help_next()
-                return
-            if (args.isdigit() != True):
-                print "N must be a number"
-                self.help_next()
-                return
-        else:
-            streams.remove(current)
-            if (len(streams) > 0):
-                current = streams[0]
-            else:
-                current = None
-
-    def help_delete(self):
-        print "delete (N)"
-        print "Delete a Stream.  If N is given delete a specific stream otherwise delete the current one."
-
-    def do_run(self, args):
-        print "run stream"
-
-    def help_run(self):
-        print "run stream"
-
-    def do_list(self, args):
-        if (current != None):
-            current.list()
-        else:
-            print "No current stream.  Use the create or set commands"
-
-    def help_list(self):
-        print "list packets"
-
-    def do_print(self, args):
-        print "print packet"
-
-    def help_print(self,):
-        print "print packet"
-
-    def do_send(self, args):
-        print "send packet"
-
-    def help_send(self):
-        print "send packet"
-
-    def do_set(self, args):
-        if len(args) <= 0:
-            self.help_set()
-            return
-        try:
-            (key, value) = args.split()
-        except:
-            self.help_set()
-
-        if key == "list_length":
-            options.list_length = int(value)
-        elif key == "layer":
-            value = int(value)
-            if value < 0:
-                options.layer = None
-            if value > 7:
-                self.help_set()
-            else:
-                options.layer = value
-        elif key == "current":
-            global current
-            value = int(value)
-            if value < 0:
-                print "Must be greater than 0"
-                self.help_set()
-                return
-            if value >= len(streams):
-                print "Must be less than %d" % (len(streams) - 1)
-                self.help_set()
-                return
-            else:
-                current = streams[value]
-        
-    def help_set(self):
-        print "set option value\n\noptions: list_length - how many packets to list at one time.\n         layer - ISO layer to show, -1 shows all\n         current - set the current stream we're inspecting [0..n]"
-
-    def do_show(self, args):
-        """Show the current options that are set."""
-        print options
-
-    def do_break(self, args):
-        print "set breakpoint"
-
-    def help_break(self):
-        print "set breakpoint"
-
-    def do_continue(self, args):
-        print "continue"
-
-    def help_continue(self):
-        print "continue"
-
-    def do_next(self, args):
-        """Move to the next packet"""
-        if (current == None):
-            print "No current stream.  Use the create or set commands"
-            return
-        if (len(args) > 0):
-            if (type(args) != str):
-                print "N must be a number"
-                self.help_next()
-                return
-            if (args.isdigit() != True):
-                print "N must be a number"
-                self.help_next()
-                return
-            current.next(args)
-        else:
-            current.next(None)
-
-    def help_next(self):
-        print "next (N)"
-        print "Move to the next packet in the list.  With a numeric argument, N, move N packets ahead in the list."
-
-    def do_prev(self, args):
-        """Move to the previous packet"""
-        if (current == None):
-            print "No current stream.  Use the create or set commands"
-            return
-        if (len(args) > 0):
-            if (type(args) != str):
-                print "N must be a number"
-                self.help_next()
-                return
-            if (args.isdigit() != True):
-                print "N must be a number"
-                self.help_next()
-                return
-            current.prev(args)
-        else:
-            current.prev(None)
-
-    def help_prev(self):
-        print "prev (N)"
-        print "Move to the previous packet in the list.  With a numeric argument, N, move N packets back in the list."
-
-    def do_info(self, args):
-        if (len (args) <= 0):
-            if (current == None):
-                print "No current stream.  Use the create or set commands"
-                return
-            print "Stream %d" % streams.index(current)
-            print "---------"
-            print current
-        else:
-            arg_list = args.split()
-            if (arg_list[0] == "all"):
-                for stream in streams:
-                    print "Stream %d" % streams.index(stream)
-                    print "---------"
-                    print stream
-            elif (arg_list[0].isdigit() == True):
-                index = int(arg_list[0])
-                try:
-                    stream = streams[index]
-                except:
-                    print "No stream %d" % index
-                    return
-                print "Stream %d" % index
-                print "---------"
-                print streams[index]
-            else:
-                self.help_info()
-                return
-            
-    def help_info(self):
-        print "info [N | all]"
-        print "Print out all the information on the current stream, a specific stream (N), or all streams."
-
-
 # The canonical way to start a Python script.  Keep at the end.
 if __name__ == "__main__":
     main()
