@@ -101,7 +101,7 @@ class Stream(object):
 
     def __str__(self):
         retval = ""
-        retval += "Breakpoints\n"
+        retval += "Breakpoints %s\n" % self.breakpoints
         retval += "File\n"
         retval += "Filter\n"
         retval += "Number of packets: %d\n" % len(self.packets)
@@ -179,17 +179,20 @@ class Stream(object):
         self.position -= jump
 
     def add_break(self, arg):
-        """Add a brakpoint."""
+        """Add a breakpoint."""
         if (arg < 0 or arg > len(self.packets)):
             print "Cannot set breakpoint at packet %d" % arg
+            return
         if (arg in self.breakpoints):
             print "Breakpoint already set at %d" % arg
-        self.breakpoints += arg
+            return
+        self.breakpoints.append(arg)
         self.breakpoints.sort()
         
     def del_break(self, arg):
         if (arg < 0 or arg > len(self.packets)):
             print "No breakpoint set at packet %d" % arg
+            return
         self.breakpoints.remove(arg)
 
     def clear_break(self):

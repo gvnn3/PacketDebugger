@@ -185,7 +185,13 @@ class Command(cmd.Cmd):
 
     def do_break(self, args):
         """set a breakpoint at the current index in the stream or at the numeric index given"""
-        numarg = self.numarg(args)
+        if (args == ""):
+            numarg = self.current.position
+        else:
+            numarg = self.numarg(args)
+        if (numarg == None):
+            self.help_break()
+            return
         self.current.add_break(numarg)
 
     def help_break(self):
