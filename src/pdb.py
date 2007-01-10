@@ -142,10 +142,30 @@ class Command(cmd.Cmd):
         print "Create a new stream from a file or a network interface."
         
     def do_delete(self, args):
-        print "delete stream"
+        """Delete a stream.  If N is present delete that stream."""
+        global current
+        if ((current == None) or (len(streams) <= 0)):
+            print "No streams.  Use the create command to create one."
+            return
+        if (len(args) > 0):
+            if (type(args) != str):
+                print "N must be a number"
+                self.help_next()
+                return
+            if (args.isdigit() != True):
+                print "N must be a number"
+                self.help_next()
+                return
+        else:
+            streams.remove(current)
+            if (len(streams) > 0):
+                current = streams[0]
+            else:
+                current = None
 
     def help_delete(self):
-        print "delete stream"
+        print "delete (N)"
+        print "Delete a Stream.  If N is given delete a specific stream otherwise delete the current one."
 
     def do_run(self, args):
         print "run stream"
@@ -154,7 +174,10 @@ class Command(cmd.Cmd):
         print "run stream"
 
     def do_list(self, args):
-        current.list()
+        if (current != None):
+            current.list()
+        else:
+            print "No current stream.  Use the create or set commands"
 
     def help_list(self):
         print "list packets"
@@ -225,6 +248,9 @@ class Command(cmd.Cmd):
 
     def do_next(self, args):
         """Move to the next packet"""
+        if (current == None):
+            print "No current stream.  Use the create or set commands"
+            return
         if (len(args) > 0):
             if (type(args) != str):
                 print "N must be a number"
@@ -244,6 +270,9 @@ class Command(cmd.Cmd):
 
     def do_prev(self, args):
         """Move to the previous packet"""
+        if (current == None):
+            print "No current stream.  Use the create or set commands"
+            return
         if (len(args) > 0):
             if (type(args) != str):
                 print "N must be a number"
@@ -262,12 +291,37 @@ class Command(cmd.Cmd):
         print "Move to the previous packet in the list.  With a numeric argument, N, move N packets back in the list."
 
     def do_info(self, args):
-        print "Stream %d" % streams.index(current)
-        print "---------"
-        print current
-
+        if (len (args) <= 0):
+            if (current == None):
+                print "No current stream.  Use the create or set commands"
+                return
+            print "Stream %d" % streams.index(current)
+            print "---------"
+            print current
+        else:
+            arg_list = args.split()
+            if (arg_list[0] == "all"):
+                for stream in streams:
+                    print "Stream %d" % streams.index(stream)
+                    print "---------"
+                    print stream
+            elif (arg_list[0].isdigit() == True):
+                index = int(arg_list[0])
+                try:
+                    stream = streams[index]
+                except:
+                    print "No stream %d" % index
+                    return
+                print "Stream %d" % index
+                print "---------"
+                print streams[index]
+            else:
+                self.help_info()
+                return
+            
     def help_info(self):
-        print "Print out all the information on the current stream."
+        print "info [N | all]"
+        print "Print out all the information on the current stream, a specific stream (N), or all streams."
 
 
 # The canonical way to start a Python script.  Keep at the end.

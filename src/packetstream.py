@@ -46,16 +46,7 @@ class InitError(Exception):
         return repr(self.message)
 
 class Stream(object):
-    """breakpoints = [] 
-    file = None      # The file or device we are working with.
-    filter = ""      # A filter passed into the pcap/bpf system for
-                     # filtering the packets we receive
-    packets = []     # The packets we are examining.
-    position = -1    # Our current location in the packet array/stream
-    type = None      # Either Capture or a Playback stream.
-    lock = None      # A lock for use by threading code (not used yet)
-    layer = 0        # What ISO layer does this stream start at
-    options = None   # The options 
+    """A class which represents a stream of packets for PDB
     """
 
     def __init__(self, options, filename=None, interface=None):
@@ -67,14 +58,14 @@ class Stream(object):
         is opened and is then available to the system."""
 
         # Set up all known data in a common place
-        self.breakpoints = [] 
-        self.file = None
-        self.filter = ""
-        self.packets = []
-        self.position = -1
-        self.type = None
-        self.lock = None
-        self.layer = 0
+        self.breakpoints = [] # List of integer breakpoints
+        self.file = None      # The file we are working with.
+        self.filter = ""      # Pcap style filter
+        self.packets = []     # The list of packets
+        self.position = -1    # Where we are in the list of packets
+        self.type = None      # What type of stream this is XXX
+        self.lock = None      # A lock for use in threading XXX
+        self.layer = 0        # The ISO layer we're working with.
 
         if filename == None and interface == None:
             raise InitError, "Must supply a file or an interface"
