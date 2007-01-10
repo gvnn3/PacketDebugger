@@ -152,6 +152,7 @@ class Command(cmd.Cmd):
             (key, value) = args.split()
         except:
             self.help_set()
+            return
 
         if key == "list_length":
             self.options.list_length = int(value)
@@ -164,6 +165,10 @@ class Command(cmd.Cmd):
             else:
                 self.options.layer = value
         elif key == "current":
+            if (value == None):
+                print "Must supply a number between 0 and %d" % len(self.streams - 1)
+                self.help_set()
+                return
             value = int(value)
             if value < 0:
                 print "Must be greater than 0"
@@ -176,6 +181,21 @@ class Command(cmd.Cmd):
             else:
                 self.current = self.streams[value]
         
+    def complete_set(self, text, line, begidx, endidx):
+        """Completion for the set command"""
+        if (text in ["li", "lis", "list", "list_", "list_l", "list_le", "list_len", "list_leng", "list_lengt"]):
+            return ["list_length"]
+        elif (text in ["la", "lay", "laye"]):
+            return ["layer"]
+        elif (text in ["c", "cu", "cur", "curr", "curre", "curren"]):
+            return ["current"]
+        else:
+            if (line == "set current "):
+                stream_list = []
+                for i in range(0, len(self.streams)):
+                    stream_list.append(str(i))
+                return stream_list
+              
     def help_set(self):
         print "set option value\n\noptions: list_length - how many packets to list at one time.\n         layer - ISO layer to show, -1 shows all\n         current - set the current stream we're inspecting [0..n]"
 
@@ -257,6 +277,8 @@ class Command(cmd.Cmd):
                     print "Stream %d" % self.streams.index(stream)
                     print "---------"
                     print stream
+            elif (arg_list[0] == "break"):
+                print "Stream %d breakpoints %s" % (self.streams.index(self.current), self.current.breakpoints)
             elif (arg_list[0].isdigit() == True):
                 index = int(arg_list[0])
                 try:
@@ -271,6 +293,18 @@ class Command(cmd.Cmd):
                 self.help_info()
                 return
             
+    def complete_info(self, text, line, begidx, endidx):
+        """Completion of the arguments for the info command"""
+        if (text in ["a" , "al", "all"]):
+            return ["all"]
+        elif (text in ["b", "br", "bre", "brea"]):
+            return ["break"]
+        else:
+            stream_list = []
+            for i in range(0, len(self.streams)):
+                stream_list.append(str(i))
+            return stream_list
+
     def help_info(self):
         print "info [N | all]"
         print "Print out all the information on the current stream, a specific stream (N), or all streams."
