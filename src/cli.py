@@ -62,7 +62,7 @@ class Command(cmd.Cmd):
         sys.exit()
 
     def help_quit(self):
-        print "Bye"
+        print "Quit the debugger"
         sys.exit()
 
     def do_create(self, args):
@@ -93,31 +93,35 @@ class Command(cmd.Cmd):
         if ((self.current == None) or (len(self.streams) <= 0)):
             print "No streams.  Use the create command to create one."
             return
-        if (len(args) > 0):
-            if (type(args) != str):
-                print "N must be a number"
-                self.help_next()
-                return
-            if (args.isdigit() != True):
-                print "N must be a number"
-                self.help_next()
-                return
-        else:
+        if (args == ""):
             self.streams.remove(self.current)
             if (len(self.streams) > 0):
                 self.current = self.streams[0]
             else:
                 self.current = None
-
+        else:
+            index = self.numarg(args)
+            if (index == None):
+                help_delete()
+                return
+            else:
+                if (self.streams[index] == self.current):
+                    self.current = None
+                del self.streams[index]
+                if (len(self.streams) > 0):
+                    self.current = self.streams[0]
+                
+            
     def help_delete(self):
         print "delete (N)"
         print "Delete a Stream.  If N is given delete a specific stream otherwise delete the current one."
 
     def do_run(self, args):
-        print "run stream"
+        """Run the current stream or the one given in the index."""
 
     def help_run(self):
-        print "run stream"
+        print "run (N)"
+        print "run the current stream or the stream given by the index"
 
     def do_list(self, args):
         if (self.current != None):
@@ -180,10 +184,13 @@ class Command(cmd.Cmd):
         print self.options
 
     def do_break(self, args):
-        print "set breakpoint"
+        """set a breakpoint at the current index in the stream or at the numeric index given"""
+        numarg = self.numarg(args)
+        self.current.add_break(numarg)
 
     def help_break(self):
-        print "set breakpoint"
+        print "break (N)"
+        print "set a breakpoint at the current index in the stream or at the numeric index given"
 
     def do_continue(self, args):
         print "continue"
@@ -197,17 +204,14 @@ class Command(cmd.Cmd):
             print "No current stream.  Use the create or set commands"
             return
         if (len(args) > 0):
-            if (type(args) != str):
-                print "N must be a number"
+            jump = self.numarg(args)
+            if (jump == None):
                 self.help_next()
                 return
-            if (args.isdigit() != True):
-                print "N must be a number"
-                self.help_next()
-                return
-            self.current.next(args)
+            else:
+                self.current.next(jump)
         else:
-            self.current.next(None)
+            self.current.next()
 
     def help_next(self):
         print "next (N)"
@@ -219,17 +223,14 @@ class Command(cmd.Cmd):
             print "No current stream.  Use the create or set commands"
             return
         if (len(args) > 0):
-            if (type(args) != str):
-                print "N must be a number"
-                self.help_next()
+            jump = self.numarg(args)
+            if (jump == None):
+                self.help_prev()
                 return
-            if (args.isdigit() != True):
-                print "N must be a number"
-                self.help_next()
-                return
-            self.current.prev(args)
+            else:
+                self.current.prev(jump)
         else:
-            self.current.prev(None)
+            self.current.prev()
 
     def help_prev(self):
         print "prev (N)"
@@ -268,4 +269,13 @@ class Command(cmd.Cmd):
         print "info [N | all]"
         print "Print out all the information on the current stream, a specific stream (N), or all streams."
 
+    def numarg(self, args):
+        """If the argument passed is numeric pass back the number, otherwise pass back None"""
+        if (type(args) != str):
+            print "N must be a number"
+            return None
+        if (args.isdigit() != True):
+            print "N must be a number"
+            return None
+        return int(args)
 

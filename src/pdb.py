@@ -67,6 +67,8 @@ def main():
 
     """
 
+    version = "Alpha 0.1"
+
     # Standard argument parsing with the optparse module.
     # Currently there are no positional arguments with pdb.
     
@@ -93,7 +95,10 @@ def main():
 
     pdbcli = cli.Command(current, options, streams)
 
-    pdbcli.cmdloop()
+    welcome = "Welcome to PDB version %s.\n" % version
+    welcome += "For a list of commands type 'help <rtn>'\n"
+    welcome += "For help on a command type 'help command <rtn>'"
+    pdbcli.cmdloop(welcome)
     
 # The canonical way to start a Python script.  Keep at the end.
 if __name__ == "__main__":

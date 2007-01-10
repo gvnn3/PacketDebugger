@@ -161,23 +161,37 @@ class Stream(object):
                     return
             print "%d: %s" % (index, packet.println())
 
-    def next(self, arg):
+    def next(self, jump=1):
         """Move to the next packet"""
-        jump = 1
-        if (arg != None):
-            jump = int(arg)
         if ((self.position + jump) > len(self.packets)):
             print "Distance %d is too far" % jump
             return 
         self.position += jump
 
-    def prev(self, arg):
+    def prev(self, jump=1):
         """Move to the previous packet."""
-        jump = 1
-        if (arg != None):
-            jump = int(arg)
         if (self.position <= 0):
+            print "Distance %d is too far" % jump
+            return
+        if ((self.position - jump) < 0):
             print "Distance %d is too far" % jump
             return
         self.position -= jump
 
+    def add_break(self, arg):
+        """Add a brakpoint."""
+        if (arg < 0 or arg > len(self.packets)):
+            print "Cannot set breakpoint at packet %d" % arg
+        if (arg in self.breakpoints):
+            print "Breakpoint already set at %d" % arg
+        self.breakpoints += arg
+        self.breakpoints.sort()
+        
+    def del_break(self, arg):
+        if (arg < 0 or arg > len(self.packets)):
+            print "No breakpoint set at packet %d" % arg
+        self.breakpoints.remove(arg)
+
+    def clear_break(self):
+        self.breakpoints = []
+    
