@@ -114,8 +114,14 @@ class Stream(object):
         return "<pdb.Stream bp, file, filter, numpkts %d, position %d, type, layer %d>" % (len(self.packets), self.position, self.layer)
 
     def run(self):
-        pass
-
+        """Run the packet stream from the beginning."""
+        for packet in self.packets:
+            try:
+                self.outfile.write(packet)
+            except:
+                print "Writing packet %d failed, aborting." % self.packets.index(packet)
+                return
+            
     def list(self):
         """List the packets in the stream."""
         if (self.position + self.options.list_length) > len(self.packets):
@@ -167,6 +173,7 @@ class Stream(object):
             print "Distance %d is too far" % jump
             return 
         self.position += jump
+        self.display(self.position, self.packets[self.position])
 
     def prev(self, jump=1):
         """Move to the previous packet."""
@@ -177,6 +184,7 @@ class Stream(object):
             print "Distance %d is too far" % jump
             return
         self.position -= jump
+        self.display(self.position, self.packets[self.position])
 
     def add_break(self, arg):
         """Add a breakpoint."""

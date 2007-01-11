@@ -63,7 +63,6 @@ class Command(cmd.Cmd):
 
     def help_quit(self):
         print "Quit the debugger"
-        sys.exit()
 
     def do_create(self, args):
         """Create a new stream from a file or network interface.
@@ -118,25 +117,66 @@ class Command(cmd.Cmd):
 
     def do_run(self, args):
         """Run the current stream or the one given in the index."""
+        
 
     def help_run(self):
         print "run (N)"
         print "run the current stream or the stream given by the index"
 
+    def do_continue(self, args):
+        print "continue"
+
+    def help_continue(self):
+        print "continue"
+
     def do_list(self, args):
-        if (self.current != None):
-            self.current.list()
+        if (args == ""):
+            if (self.current != None):
+                self.current.list()
+            else:
+                print "No current stream.  Use the create or set commands"
         else:
-            print "No current stream.  Use the create or set commands"
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_list()
+                return
+            if ((numarg < 0) or (numarg >= len(self.streams))):
+                print "Stream must be between 0 and %d." % (len(self.streams) - 1)
+                self.help_list()
+                return
+            self.streams[numarg].list()
 
     def help_list(self):
-        print "list packets"
+        print "list (N)"
+        print "list packets from current stream or the stream at index N "
+
+    def complete_list(self, text, line, begidx, endidx):
+        stream_list = []
+        for i in range(0, len(self.streams)):
+            stream_list.append(str(i))
+        return stream_list
 
     def do_print(self, args):
-        print "print packet"
+        if (args == ""):
+            if (self.current == None):
+                print "No current stream.  Use the create or set commands"
+                return
+            else:
+                numarg = self.current.position
+        else:
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_print()
+                return
+        if ((numarg < 0) or (numarg > (len(self.current.packets) - 1))):
+            print "Index must be between 0 and %d." % (len(self.current.packets) - 1)
+            return
+        
+        self.current.display(numarg, self.current.packets[numarg])
 
-    def help_print(self,):
-        print "print packet"
+    def help_print(self):
+        print "print (N)"
+        print "print the current packet in the current stream or packet N in the current stream"
 
     def do_send(self, args):
         print "send packet"
@@ -217,12 +257,6 @@ class Command(cmd.Cmd):
     def help_break(self):
         print "break (N)"
         print "set a breakpoint at the current index in the stream or at the numeric index given"
-
-    def do_continue(self, args):
-        print "continue"
-
-    def help_continue(self):
-        print "continue"
 
     def do_next(self, args):
         """Move to the next packet"""
