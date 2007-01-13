@@ -117,11 +117,31 @@ class Command(cmd.Cmd):
 
     def do_run(self, args):
         """Run the current stream or the one given in the index."""
-        
+        if (args == ""):
+            if (self.current != None):
+                self.current.run()
+            else:
+                print "No current stream.  Use the create or set commands"
+        else:
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_run()
+                return
+            if ((numarg < 0) or (numarg >= len(self.streams))):
+                print "Stream must be between 0 and %d." % (len(self.streams) - 1)
+                self.help_run()
+                return
+            self.streams[numarg].run()
 
     def help_run(self):
         print "run (N)"
         print "run the current stream or the stream given by the index"
+
+    def complete_run(self, text, line, begidx, endidx):
+        stream_list = []
+        for i in range(0, len(self.streams)):
+            stream_list.append(str(i))
+        return stream_list
 
     def do_continue(self, args):
         print "continue"

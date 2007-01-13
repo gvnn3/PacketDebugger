@@ -88,7 +88,7 @@ def main():
     streams = []  # The list of streams we're working with.
     current = None  # The current stream number
 
-    streams.append(packetstream.Stream(options, cmdln_options.filename))
+    streams.append(packetstream.Stream(options, cmdln_options.filename, cmdln_options.interface))
     current = streams[0]
     
     # Jump into the cli

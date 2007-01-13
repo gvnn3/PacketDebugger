@@ -69,19 +69,21 @@ class Stream(object):
 
         if filename == None and interface == None:
             raise InitError, "Must supply a file or an interface"
-        if filename != None and interface != None:
-            raise InitError, "Cannot supply both a file AND an interface"
+
         self.options = options
 
         if (interface != None):
-            raise InitError, "Live capture not supported"
+            try:
+                self.outfile = pcs.PcapConnector(interface)
+            except:
+                raise InitError, "Cannot open interface %s, you may need to be root." % interface
 
         if (filename != None):
             try:
                 self.file = pcs.PcapConnector(filename)
             except:
                 raise InitError, "Cannot open pcap file %s" % filename
-            
+
             done = False
             packet = None
             while not done:
@@ -89,15 +91,15 @@ class Stream(object):
                     packet = self.file.readpkt()
                 except:
                     done = True
-                
+
                 self.packets.append(packet)
 # XXX FIX PCS                self.file.close()
             self.position = 0
 
-            if self.file.dlink == pcap.DLT_EN10MB:
-                layer = 2
+            if (self.file.dlink == pcap.DLT_EN10MB):
+                self.layer = 2
             else:         # Default case
-                layer = 3 # Network and above
+                self.layer = 3 # Network and above
 
     def __str__(self):
         retval = ""
@@ -107,7 +109,8 @@ class Stream(object):
         retval += "Number of packets: %d\n" % len(self.packets)
         retval += "Current Position: %d\n" % self.position
         retval += "Type\n"
-        retval += "Layer: %d" % self.layer
+        retval += "Layer: %d\n" % self.layer
+        retval += "Datalink: %s\tOffset: %d" % (self.file.dlink, self.file.dloff)
         return retval
 
     def __repr__(self):
@@ -115,13 +118,25 @@ class Stream(object):
 
     def run(self):
         """Run the packet stream from the beginning."""
+        if ((self.file.dlink != self.outfile.dlink) and (self.outfile.dlink != pcap.DLT_NULL)):
+            print "Input stream and output interface must agree."
+            print "Input stream dlink %d, output interface dlink %d" % (self.file.dlink, self.outfile.dlink)
+            print "run stopped"
+            return
+
         for packet in self.packets:
+            packet = self.map(packet, self.outfile)
             try:
-                self.outfile.write(packet)
+                written = self.outfile.write(packet.bytes, len(packet.bytes))
             except:
                 print "Writing packet %d failed, aborting." % self.packets.index(packet)
                 return
-            
+
+    def map(self, packet, device):
+        """Take a packet and make it transmittable on the device passed in."""
+        if (self.file.dloff == device.dloff):
+            return packet.chain()
+
     def list(self):
         """List the packets in the stream."""
         if (self.position + self.options.list_length) > len(self.packets):
