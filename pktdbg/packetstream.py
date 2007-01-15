@@ -129,13 +129,13 @@ class Stream(object):
             if (self.position in self.breakpoints):
                 print "Breakpoint at %d" % self.position
                 return
-            self.position += 1
             packet = self.map(packet, self.outfile)
             try:
                 written = self.outfile.write(packet.bytes, len(packet.bytes))
             except:
-                print "Writing packet %d failed, aborting." % self.packets.index(packet)
+                print "Writing packet %d failed, aborting." % self.position
                 return
+            self.position += 1
 
     def map(self, packet, device):
         """Take a packet and make it transmittable on the device passed in."""
