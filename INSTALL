@@ -1,0 +1,23 @@
+Installation Instructions for the Packet Debugger (pdb)
+
+The Packet Debugger follows the normal Python conventions for building
+and installing and there is very little, if any, magic.  To install
+the program and the associated packet classes into your system do:
+
+> python setup.py install <return>
+
+To test your installation do:
+
+> cd tests/ <return>
+> pdb.py -f test.out
+pdb> list
+... Some amusing output.
+
+To build the documentation you will need pdflatex and a BSD version of
+make(1) installed.  Go into the docs directory and build the
+documentation:
+
+> cd docs/ <return>
+> bsdmake all
+
+you will see PDF versions of the docs.
