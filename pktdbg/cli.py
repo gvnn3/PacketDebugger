@@ -64,6 +64,10 @@ class Command(cmd.Cmd):
     def help_quit(self):
         print "Quit the debugger"
 
+        #
+        # Stream Management Commands
+        #
+
     def do_create(self, args):
         """Create a new stream from a file or network interface.
 
@@ -167,6 +171,57 @@ class Command(cmd.Cmd):
         print "continue (N)"
         print "continue the current stream or the stream given by the index"
 
+    def do_info(self, args):
+        if (len (args) <= 0):
+            if (self.current == None):
+                print "No current stream.  Use the create or set commands"
+                return
+            print "Stream %d" % self.streams.index(self.current)
+            print "---------"
+            print self.current
+        else:
+            arg_list = args.split()
+            if (arg_list[0] == "all"):
+                for stream in self.streams:
+                    print "Stream %d" % self.streams.index(stream)
+                    print "---------"
+                    print stream
+            elif (arg_list[0] == "break"):
+                print "Stream %d breakpoints %s" % (self.streams.index(self.current), self.current.breakpoints)
+            elif (arg_list[0].isdigit() == True):
+                index = int(arg_list[0])
+                try:
+                    stream = self.streams[index]
+                except:
+                    print "No stream %d" % index
+                    return
+                print "Stream %d" % index
+                print "---------"
+                print self.streams[index]
+            else:
+                self.help_info()
+                return
+            
+    def complete_info(self, text, line, begidx, endidx):
+        """Completion of the arguments for the info command"""
+        if (text in ["a" , "al", "all"]):
+            return ["all"]
+        elif (text in ["b", "br", "bre", "brea"]):
+            return ["break"]
+        else:
+            stream_list = []
+            for i in range(0, len(self.streams)):
+                stream_list.append(str(i))
+            return stream_list
+
+    def help_info(self):
+        print "info [N | all]"
+        print "Print out all the information on the current stream, a specific stream (N), or all streams."
+
+        #
+        # Stream and Packet Inspection
+        #
+
     def do_list(self, args):
         if (args == ""):
             if (self.current != None):
@@ -239,6 +294,10 @@ class Command(cmd.Cmd):
         print "send (N)"
         print "send the current packet or the packet given by N in the current stream"
 
+        #
+        # Global set command, for debugger state.
+        #
+
     def do_set(self, args):
         if len(args) <= 0:
             self.help_set()
@@ -298,6 +357,11 @@ class Command(cmd.Cmd):
         """Show the current options that are set."""
         print self.options
 
+        #
+        # Stream manipulation commands.  Breakpoints, position changes
+        # and packet manipluation.
+        #
+
     def do_break(self, args):
         """set a breakpoint at the current index in the stream or at the numeric index given"""
         if (args == ""):
@@ -351,52 +415,9 @@ class Command(cmd.Cmd):
         print "prev (N)"
         print "Move to the previous packet in the list.  With a numeric argument, N, move N packets back in the list."
 
-    def do_info(self, args):
-        if (len (args) <= 0):
-            if (self.current == None):
-                print "No current stream.  Use the create or set commands"
-                return
-            print "Stream %d" % self.streams.index(self.current)
-            print "---------"
-            print self.current
-        else:
-            arg_list = args.split()
-            if (arg_list[0] == "all"):
-                for stream in self.streams:
-                    print "Stream %d" % self.streams.index(stream)
-                    print "---------"
-                    print stream
-            elif (arg_list[0] == "break"):
-                print "Stream %d breakpoints %s" % (self.streams.index(self.current), self.current.breakpoints)
-            elif (arg_list[0].isdigit() == True):
-                index = int(arg_list[0])
-                try:
-                    stream = self.streams[index]
-                except:
-                    print "No stream %d" % index
-                    return
-                print "Stream %d" % index
-                print "---------"
-                print self.streams[index]
-            else:
-                self.help_info()
-                return
-            
-    def complete_info(self, text, line, begidx, endidx):
-        """Completion of the arguments for the info command"""
-        if (text in ["a" , "al", "all"]):
-            return ["all"]
-        elif (text in ["b", "br", "bre", "brea"]):
-            return ["break"]
-        else:
-            stream_list = []
-            for i in range(0, len(self.streams)):
-                stream_list.append(str(i))
-            return stream_list
-
-    def help_info(self):
-        print "info [N | all]"
-        print "Print out all the information on the current stream, a specific stream (N), or all streams."
+        #
+        # Miscellaneous helper functions for our cli
+        #
 
     def numarg(self, args):
         """If the argument passed is numeric pass back the number, otherwise pass back None"""
