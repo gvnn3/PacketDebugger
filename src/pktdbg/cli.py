@@ -119,7 +119,7 @@ class Command(cmd.Cmd):
         """Run the current stream or the one given in the index."""
         if (args == ""):
             if (self.current != None):
-                self.current.run()
+                self.current.run(0)
             else:
                 print "No current stream.  Use the create or set commands"
         else:
@@ -129,9 +129,9 @@ class Command(cmd.Cmd):
                 return
             if ((numarg < 0) or (numarg >= len(self.streams))):
                 print "Stream must be between 0 and %d." % (len(self.streams) - 1)
-                self.help_run()
+                self.help_run(0)
                 return
-            self.streams[numarg].run()
+            self.streams[numarg].run(0)
 
     def help_run(self):
         print "run (N)"
@@ -144,10 +144,28 @@ class Command(cmd.Cmd):
         return stream_list
 
     def do_continue(self, args):
-        print "continue"
+        """Continue the current stream or the one given in the index."""
+        if (args == ""):
+            if (self.current != None):
+                self.current.next()
+                self.current.run(self.current.position)
+            else:
+                print "No current stream.  Use the create or set commands"
+        else:
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_run()
+                return
+            if ((numarg < 0) or (numarg >= len(self.streams))):
+                print "Stream must be between 0 and %d." % (len(self.streams) - 1)
+                self.help_run()
+                return
+            self.streams[numarg].next()
+            self.streams[numarg].run(self.streams[numarg].position)
 
     def help_continue(self):
-        print "continue"
+        print "continue (N)"
+        print "continue the current stream or the stream given by the index"
 
     def do_list(self, args):
         if (args == ""):

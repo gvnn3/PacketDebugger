@@ -39,11 +39,8 @@
 # system is installed.
 
 import sys
-import cli
-
-sys.path.insert(0, ".") # Look locally first.
-# Import all of the datatypes we need for the debugger.
-import packetstream
+from pktdbg import cli
+from pktdbg import packetstream
 
 class Options(object):
 

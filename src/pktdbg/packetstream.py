@@ -116,15 +116,20 @@ class Stream(object):
     def __repr__(self):
         return "<pdb.Stream bp, file, filter, numpkts %d, position %d, type, layer %d>" % (len(self.packets), self.position, self.layer)
 
-    def run(self):
-        """Run the packet stream from the beginning."""
+    def run(self, index):
+        """Run the packet stream from the index."""
         if ((self.file.dlink != self.outfile.dlink) and (self.outfile.dlink != pcap.DLT_NULL)):
             print "Input stream and output interface must agree."
             print "Input stream dlink %d, output interface dlink %d" % (self.file.dlink, self.outfile.dlink)
             print "run stopped"
             return
 
-        for packet in self.packets:
+        self.position = index
+        for packet in self.packets[index:len(self.packets)]:
+            if (self.position in self.breakpoints):
+                print "Breakpoint at %d" % self.position
+                return
+            self.position += 1
             packet = self.map(packet, self.outfile)
             try:
                 written = self.outfile.write(packet.bytes, len(packet.bytes))
