@@ -39,6 +39,7 @@
 # system is installed.
 
 import sys
+sys.path.insert(0, ".") # Look locally first.
 from pktdbg import cli
 from pktdbg import packetstream
 

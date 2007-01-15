@@ -217,10 +217,27 @@ class Command(cmd.Cmd):
         print "print the current packet in the current stream or packet N in the current stream"
 
     def do_send(self, args):
-        print "send packet"
-
+        "send the current packet or the packet given by N in the current stream"
+        if (args == ""):
+            if (self.current == None):
+                print "No current stream.  Use the create or set commands"
+                return
+            else:
+                numarg = self.current.position
+        else:
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_print()
+                return
+        if ((numarg < 0) or (numarg > (len(self.current.packets) - 1))):
+            print "Index must be between 0 and %d." % (len(self.current.packets) - 1)
+            return
+        
+        self.current.send(self.current.packets[numarg])
+        
     def help_send(self):
-        print "send packet"
+        print "send (N)"
+        print "send the current packet or the packet given by N in the current stream"
 
     def do_set(self, args):
         if len(args) <= 0:

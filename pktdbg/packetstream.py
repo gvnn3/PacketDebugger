@@ -137,6 +137,15 @@ class Stream(object):
                 return
             self.position += 1
 
+    def send(self, packet):
+        """Send a single packet"""
+        packet = self.map(packet, self.outfile)
+        try:
+            written = self.outfile.write(packet.bytes, len(packet.bytes))
+        except:
+            print "Sending packet failed."
+            return
+
     def map(self, packet, device):
         """Take a packet and make it transmittable on the device passed in."""
         if (self.file.dloff == device.dloff):
