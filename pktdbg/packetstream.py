@@ -196,6 +196,10 @@ class Stream(object):
                     return
             print "%d: %s" % (index, packet.println())
 
+    def update(self, packet):
+        "Interactively update a packet."
+        pass
+
     def next(self, jump=1):
         """Move to the next packet"""
         if ((self.position + jump) > len(self.packets)):

@@ -294,6 +294,23 @@ class Command(cmd.Cmd):
         print "send (N)"
         print "send the current packet or the packet given by N in the current stream"
 
+    def do_update(self, args):
+        if (args == ""):
+            if (self.current == None):
+                print "No current stream.  Use the create or set commands"
+                return
+            else:
+                numarg = self.current.position
+        else:
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_print()
+                return
+        if ((numarg < 0) or (numarg > (len(self.current.packets) - 1))):
+            print "Index must be between 0 and %d." % (len(self.current.packets) - 1)
+            return
+        self.current.packets[numarg].update()
+
         #
         # Global set command, for debugger state.
         #

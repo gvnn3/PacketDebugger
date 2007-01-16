@@ -1,5 +1,12 @@
 Installation Instructions for the Packet Debugger (pdb)
 
+NOTE: You MUST install the PCS (Packet Construction Set) package
+before installing this package.  PCS is available on Source Forge at:
+
+http://pcs.sf.net
+
+as well as in FreeBSD and Mac ports.
+
 The Packet Debugger follows the normal Python conventions for building
 and installing and there is very little, if any, magic.  To install
 the program and the associated packet classes into your system do:

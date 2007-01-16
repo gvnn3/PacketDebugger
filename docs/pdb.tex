@@ -1,0 +1,108 @@
+\documentclass[11pt]{article}
+\usepackage{codespelunking}
+\usepackage[pdftex]{hyperref}
+\title{Packet Debugger}
+\author{George V. Neville-Neil}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The Packet Debugger, \emph{pdb} is a program which allows people to
+work with packet streams as if they were working with a source code
+debugger. Users can list, inspect, modify, and retransmit any packet
+from captured files as well as work with live packet capture.
+
+Installing \program{pdb} is covered in the text file,
+\file{INSTALLATION}, which came with this package.  The code is under
+a BSD License and can be found in the file \file{COPYRIGHT} in the
+root of this package.
+
+\section{A Quick Tour}
+
+For the impatient this section is a 5 minute intro to using the packet
+debugger.
+
+\section{Starting \program{pdb}}
+
+\section{Command Reference}
+
+\subsection{help}
+
+\begin{verbatim}
+pdb> help
+
+Documented commands (type help <topic>):
+========================================
+break     create  info  next  print  run   set 
+continue  delete  list  prev  quit   send  show
+
+Undocumented commands:
+======================
+help  update
+\end{verbatim}
+
+The help command prints out the available topics for help.  To get
+help on a specific command type \verb|help command| where
+\verb|command| is one of the commands listed when you ask for help on
+its own.
+
+\subsection{quit}
+
+\begin{verbatim}
+pdb> quit
+Bye
+localhost ? 
+\end{verbatim}
+
+Quit the program.  If you have modified any streams you will asked if
+you wish to save them before exiting.
+
+\subsection{Loading and Saving Streams}
+
+Each of the commands in this section works on a stream, which is the
+basic unit on which pdb operates.
+
+\subsubsection{create}
+
+Read a new stream from a file, or open a network connection.
+Currently only \program{pcap} files are supported by the \verb|create|
+command.  
+
+\subsubsection{delete}
+
+\subsubsection{info}
+
+\subsection{Inspecting a Stream}
+
+\subsubsection{list}
+
+\subsubsection{print}
+
+\subsubsection{next}
+
+\subsubsection{prev}
+
+\subsection{Running a Strream}
+
+\subsubsection{run}
+
+\subsubsection{break}
+
+\subsubsection{continue}
+
+\subsection{Working with Packets}
+
+\subsubsection{send}
+
+\subsubsection{update}
+
+\subsection{Debugger Options}
+
+\subsubsection{show}
+
+\subsubsection{set}
+
+\end{document}
+\begin{thebibliography}{99} 
+\end{thebibliography}
