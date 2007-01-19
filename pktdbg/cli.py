@@ -57,6 +57,10 @@ class Command(cmd.Cmd):
         self.prompt = "pdb> "
         cmd.Cmd.__init__(self)
 
+    def help_help(self):
+        print "help [command]"
+        print "print out the help message, with [command] get help on that comamnd"
+        
     def do_quit(self, message):
         print "Bye"
         sys.exit()
@@ -68,8 +72,8 @@ class Command(cmd.Cmd):
         # Stream Management Commands
         #
 
-    def do_create(self, args):
-        """Create a new stream from a file or network interface.
+    def do_load(self, args):
+        """Load a new stream from a file or network interface.
 
         Acceptable argument lists are:
         file filename
@@ -78,23 +82,23 @@ class Command(cmd.Cmd):
         try:
             arg_list = args.split()
         except:
-            self.help_create()
+            self.help_load()
             return
         if (len(arg_list) != 2):
-            self.help_create()
+            self.help_load()
             return
 
         self.current = packetstream.Stream(self.options, arg_list[1])
         self.streams.append(self.current)
 
-    def help_create(self):
-        print "create file|interface filename|interface name"
-        print "Create a new stream from a file or a network interface."
+    def help_load(self):
+        print "load filename|interface"
+        print "Load a stream from a file or open an interface"
         
-    def do_delete(self, args):
-        """Delete a stream.  If N is present delete that stream."""
+    def do_unload(self, args):
+        """Unload a stream.  If N is present unload that stream."""
         if ((self.current == None) or (len(self.streams) <= 0)):
-            print "No streams.  Use the create command to create one."
+            print "No streams.  Use the load command to create one."
             return
         if (args == ""):
             self.streams.remove(self.current)
@@ -105,7 +109,7 @@ class Command(cmd.Cmd):
         else:
             index = self.numarg(args)
             if (index == None):
-                help_delete()
+                help_unload()
                 return
             else:
                 if (self.streams[index] == self.current):
@@ -115,9 +119,9 @@ class Command(cmd.Cmd):
                     self.current = self.streams[0]
                 
             
-    def help_delete(self):
-        print "delete (N)"
-        print "Delete a Stream.  If N is given delete a specific stream otherwise delete the current one."
+    def help_unload(self):
+        print "unload (N)"
+        print "Unload a Stream.  If N is given unload a specific stream otherwise unload the current one."
 
     def do_run(self, args):
         """Run the current stream or the one given in the index."""
@@ -125,7 +129,7 @@ class Command(cmd.Cmd):
             if (self.current != None):
                 self.current.run(0)
             else:
-                print "No current stream.  Use the create or set commands"
+                print "No current stream.  Use the load or set commands"
         else:
             numarg = self.numarg(args)
             if (numarg == None):
@@ -133,7 +137,7 @@ class Command(cmd.Cmd):
                 return
             if ((numarg < 0) or (numarg >= len(self.streams))):
                 print "Stream must be between 0 and %d." % (len(self.streams) - 1)
-                self.help_run(0)
+                self.help_run()
                 return
             self.streams[numarg].run(0)
 
@@ -148,13 +152,14 @@ class Command(cmd.Cmd):
         return stream_list
 
     def do_continue(self, args):
-        """Continue the current stream or the one given in the index."""
+        """Continue the current stream or the
+        one given in the index."""
         if (args == ""):
             if (self.current != None):
-                self.current.next()
-                self.current.run(self.current.position)
+                self.current.run(self.current.position,
+                                 self.current.position)
             else:
-                print "No current stream.  Use the create or set commands"
+                print "No current stream.  Use the load or set commands"
         else:
             numarg = self.numarg(args)
             if (numarg == None):
@@ -164,8 +169,8 @@ class Command(cmd.Cmd):
                 print "Stream must be between 0 and %d." % (len(self.streams) - 1)
                 self.help_run()
                 return
-            self.streams[numarg].next()
-            self.streams[numarg].run(self.streams[numarg].position)
+            self.streams[numarg].run(self.streams[numarg].position,
+                                     self.streams[numarg].position)
 
     def help_continue(self):
         print "continue (N)"
@@ -174,7 +179,7 @@ class Command(cmd.Cmd):
     def do_info(self, args):
         if (len (args) <= 0):
             if (self.current == None):
-                print "No current stream.  Use the create or set commands"
+                print "No current stream.  Use the load or set commands"
                 return
             print "Stream %d" % self.streams.index(self.current)
             print "---------"
@@ -227,7 +232,7 @@ class Command(cmd.Cmd):
             if (self.current != None):
                 self.current.list()
             else:
-                print "No current stream.  Use the create or set commands"
+                print "No current stream.  Use the load or set commands"
         else:
             numarg = self.numarg(args)
             if (numarg == None):
@@ -252,7 +257,7 @@ class Command(cmd.Cmd):
     def do_print(self, args):
         if (args == ""):
             if (self.current == None):
-                print "No current stream.  Use the create or set commands"
+                print "No current stream.  Use the load or set commands"
                 return
             else:
                 numarg = self.current.position
@@ -271,11 +276,34 @@ class Command(cmd.Cmd):
         print "print (N)"
         print "print the current packet in the current stream or packet N in the current stream"
 
+    def do_delete(self, args):
+        "delete the current packet or the packet given by N in the current stream"
+        if (args == ""):
+            if (self.current == None):
+                print "No current stream.  Use the load or set commands"
+                return
+            else:
+                numarg = self.current.position
+        else:
+            numarg = self.numarg(args)
+            if (numarg == None):
+                self.help_delete()
+                return
+        if ((numarg < 0) or (numarg > (len(self.current.packets) - 1))):
+            print "Index must be between 0 and %d." % (len(self.current.packets) - 1)
+            return
+        
+        del self.current.packets[numarg]
+        
+    def help_delete(self):
+        print "delete (N)"
+        print "delete the current packet or the packet given by N in the current stream"
+
     def do_send(self, args):
         "send the current packet or the packet given by N in the current stream"
         if (args == ""):
             if (self.current == None):
-                print "No current stream.  Use the create or set commands"
+                print "No current stream.  Use the load or set commands"
                 return
             else:
                 numarg = self.current.position
@@ -293,23 +321,6 @@ class Command(cmd.Cmd):
     def help_send(self):
         print "send (N)"
         print "send the current packet or the packet given by N in the current stream"
-
-    def do_update(self, args):
-        if (args == ""):
-            if (self.current == None):
-                print "No current stream.  Use the create or set commands"
-                return
-            else:
-                numarg = self.current.position
-        else:
-            numarg = self.numarg(args)
-            if (numarg == None):
-                self.help_print()
-                return
-        if ((numarg < 0) or (numarg > (len(self.current.packets) - 1))):
-            print "Index must be between 0 and %d." % (len(self.current.packets) - 1)
-            return
-        self.current.packets[numarg].update()
 
         #
         # Global set command, for debugger state.
@@ -397,7 +408,7 @@ class Command(cmd.Cmd):
     def do_next(self, args):
         """Move to the next packet"""
         if (self.current == None):
-            print "No current stream.  Use the create or set commands"
+            print "No current stream.  Use the load or set commands"
             return
         if (len(args) > 0):
             jump = self.numarg(args)
@@ -416,7 +427,7 @@ class Command(cmd.Cmd):
     def do_prev(self, args):
         """Move to the previous packet"""
         if (self.current == None):
-            print "No current stream.  Use the create or set commands"
+            print "No current stream.  Use the load or set commands"
             return
         if (len(args) > 0):
             jump = self.numarg(args)

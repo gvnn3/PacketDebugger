@@ -18,90 +18,609 @@ Installing \program{pdb} is covered in the text file,
 a BSD License and can be found in the file \file{COPYRIGHT} in the
 root of this package.
 
+\emph{Note: You will very likely need root or sudo access in order to
+write packets directly to a network interface, or read them directly
+from it.  If you don't understand this note, then please talk to your
+local systems or network administrator before trying to use
+\program{pdb} to read and write raw packets.}
+
 \section{A Quick Tour}
 
 For the impatient this section is a 5 minute intro to using the packet
 debugger.
 
+Create a \program{pcap} file with \program{tcpdump},
+\program{ethereal}, \program{wireshark} or another program of your
+choosing.  Now load the \program{pcap} file into \program{pdb} as
+shown in Figure~\ref{fig:tour}.  Figure~\ref{fig:tour} will serve as
+our only figure throughout this section.  You said you were impatient,
+didn't you?
+
+\begin{figure}
+  \centering
+\begin{verbatim}
+minion ? sudo src/pdb.py -f tests/test.out -i en0
+Welcome to PDB version Alpha 0.1.
+For a list of commands type 'help <rtn>'
+For help on a command type 'help command <rtn>'
+pdb> help
+
+Documented commands (type help <topic>):
+========================================
+break     delete  list  next  print  run   set   unload
+continue  info    load  prev  quit   send  show
+
+pdb> print
+
+0: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, 
+        sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, 
+        tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+
+pdb> list
+0: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+
+1: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+
+2: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>  <IPv4: hlen: 5, protocol: 6, src: 167844872, tos: 0, dst: 1074628338, ttl: 64, length: 105, version: 4, flags: 2, offset: 0, checksum: 47703, id: 37679>
+  <TCP: reset: 6, reserved: 0, sequence: 3630104920L, ack: 1, checksum: 1430, offset: 8, syn: 12, urgent: 0, window: 65535, push: 3, ack_number: 4015249839L, dport: 993, sport: 49616, fin: 0, urg_pointer: 0>
+  <Data: payload: 13461827120112604152439673499521091613012183756744016516126079577203641068557009167112742657168772916671786032510888690444211521996639179562876754643964994L>
+
+3: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\x00\x17\xf2\xe8\x9a*', type: 2048>  <IPv4: hlen: 5, protocol: 6, src: 1074628338, tos: 0, dst: 167844872, ttl: 55, length: 425, version: 4, flags: 2, offset: 0, checksum: 40686, id: 46680>
+  <TCP: reset: 6, reserved: 0, sequence: 4015249839L, ack: 1, checksum: 64954, offset: 8, syn: 12, urgent: 0, window: 33304, push: 3, ack_number: 3630104973L, dport: 49616, sport: 993, fin: 0, urg_pointer: 0>
+  <Data: payload: 5833012640182693830740685309126491793183699354072300151259887449111900223013072262057228427952454204363050124163974701919320231039714257186439729648731796984576895640540827156034249534186268294777905353058494442547381940092005934427977703939254077088072230177882319530193101444049370977201335185290558235492941608468398296242021852705546280494168148714793243111271446226387129752233141276928172956761542113121601891159734015928292135298305526284694598441895919668354893368028440796272596499459637782160160949364173180847632982338355958973538673335692826303060143533552478348684067153096055484460618734949540202673143664114973333257350640273968888301032870000789426742409723456522916256773251706805158210497890950688880528440262065433000898705974667973316825759346425343593300497289668031645087750161623693418694103031553157333595341291066305455733262705911384454726321109625967822889228309280197390940855905815302395040621413L>
+
+[NOTE: Packets 4 through 9 removed for brevity]
+
+pdb> run
+pdb> quit
+Bye
+\end{verbatim}
+  \caption{Quick starting \program{pdb}}
+  \label{fig:tour}
+\end{figure}
+
+The first thing to do when you start a new program is to ask for help,
+and \program{pdb} is no different in this respect.  The complete
+command set is described in the built in help system.  You can ask for
+help on each command as well, but that is not shown in this section.
+
+\program{pdb} attempts to at very much like a well known debugger and
+so, if you're a programmer, you're very likely to recognize many of
+the commands.
+
+In our example we've loaded the test data used to test this program,
+\file{test.out}.  Each file or set of packets is part of a stream, and
+in this example we have one stream, which was loaded from
+\file{test.out}.  We are currently at position 0 in the stream, the
+beginning.  We can print the packet at the current position with the
+\verb|print| command, as shown in the example.  What we see is an
+Ethernet packet, containing an ARP request.  We can also list all the
+packets in the stream, up to a user configured limit.  The \verb|list|
+command shows, by default, 10 packets, including the one at your
+current position and the following 9.  To play back a stream over the
+interface selected at start up the \verb|run| command is used.  If you
+pick an Ethernet interface at start up, as we did with \verb|en0|, then
+the packet stream will be sent over that interface.  To see the
+packets you're playing back you can run \program{tcpdump} or a similar
+packet capture program, to see the packets coming from \program{pdb}.
+
+
 \section{Starting \program{pdb}}
 
+In order to start a debugging session you will need either a
+pre-recorded \program{pcap} file or a network interface to work with,
+and possibly both.  The command line arguments to \program{pdb} are
+relatively simple and are shown in
+Figure~\ref{fig:pdb-command-line-arguments}.
+
+\begin{figure}
+  \centering
+\begin{verbatim}
+usage: pdb.py [options]
+
+options:
+  -h, --help            show this help message and exit
+  -f FILENAME, --file=FILENAME
+                        pcap file to read
+  -i INTERFACE, --interface=INTERFACE
+                        Network interface to connect to.
+\end{verbatim}
+  \caption{\program{pdb} command line arguments}
+  \label{fig:pdb-command-line-arguments}
+\end{figure}
+
+The \verb|-f| or \verb|--file| switch supplies a path and file name to
+\program{pdb} which it will then attempt to load into the program.  If
+no \verb|-i| or \verb|--interface| argument is supplied then the user
+can only read packets from the file.  Other files and interfaces may
+be opened from the command line, see Sections
+
+Once \program{pdb} has started you will see the command prompt, shown
+in Figure~\ref{fig:command-prompt}.
+
+\begin{figure}
+  \centering
+\begin{verbatim}
+pdb>
+\end{verbatim}
+  \caption{Command Prompt}
+  \label{fig:command-prompt}
+\end{figure}
+
+At this point \program{pdb} is awaiting your commands.
+
+\subsection{Working with the Command Line}
+\label{sec:working-with-the-command-line}
+
+The Command Line Interpreter (CLI) in \program{pdb} is implemented
+using the \class{Cmd} module in Python, which in turn uses the popular
+\program{readline} package.  What all of that means is that you have 
+fairly rich, built in command line functions, including the ability to
+repeat, edit, and complete command lines.  We are not going to
+reproduce all of the documentation on \program{readline} in this
+section but will give a brief introduction to what the CLI provides.
+If you have worked with any modern Unix shell, i.e. bash, tcsh, etc.,
+you will be quite comfortable using the \program{pdb} CLI.
+
+As with any other command line your cursor waits at the prompt for
+your input.  You can ask for \verb|help| which will give you a list of
+commands to choose from, and you can ask for help on a particular
+command, which will explain the command itself.  When you are entering
+characters on the command line you can use a few special keys to edit
+the text you have already entered, and these keys are listed in
+Table~\ref{tab:cli-editing-keys}.
+
+\begin{table}
+  \centering
+  \begin{tabular}{|l|l|}
+    \hline
+    Ctrl-b & Back up one character\\
+    \hline
+    Ctrl-f & Move forward one character\\
+    \hline
+    Ctrl-a & Move to the beginning of the line\\
+    \hline
+    Ctrl-e & Move to the end of the line\\
+    \hline
+    Enter & Ask \program{pdb} to execute the command\\
+    \hline
+    Tab & Complete command\\
+    \hline
+  \end{tabular}
+  \caption{CLI Editing Keys}
+  \label{tab:cli-editing-keys}
+\end{table}
+
+Command completion is the ability of the CLI to guess, based on a few
+characters, what command you're trying to give to it.  Using the Tab
+key frequently is a good way to avoid typing too much or making typing
+mistakes.  If the CLI is unable to understand the command you're trying
+to complete it will tell you, by either going no further in the
+command line when you type Tab, or by giving you a set of choices of
+possible commands to complete.  Pressing Tab when there is no text
+after the command prompt will give you a list of all the available
+commands.  Some commands also have completion based on the data you
+are trying to work with, such as a list of streams, and these special
+cases are covered in sections \ref{sec:cmd-run}, \ref{sec:cmd-info},
+\ref{sec:cmd-list}, and \ref{sec:cmd-set}, which cover the commands
+that have completion.
+
+Unlike a Unix shell exiting by the Ctrl-d (EOF) key is not supported,
+though the program can be halted using Ctrl-c.  We strongly recommend
+using the \verb|quit| command to exit the program.
+
 \section{Command Reference}
+\label{sec:command-reference}
+
+All of the commands implemented in \program{pdb} are covered in this
+section and its subsequent sub-sections.
 
 \subsection{help}
+\label{sec:help}
 
+The help command prints out the available topics for help.  
+\begin{figure}[h]
+  \centering
 \begin{verbatim}
 pdb> help
 
 Documented commands (type help <topic>):
 ========================================
-break     create  info  next  print  run   set 
-continue  delete  list  prev  quit   send  show
-
-Undocumented commands:
-======================
-help  update
+break     delete  info  load  prev   quit  send  show  
+continue  help    list  next  print  run   set   unload
 \end{verbatim}
+  \caption{Help on all commands}
+  \label{fig:help-all-example}
+\end{figure}
 
-The help command prints out the available topics for help.  To get
-help on a specific command type \verb|help command| where
+To get help on a specific command type \verb|help command| where
 \verb|command| is one of the commands listed when you ask for help on
 its own.
 
-\subsection{quit}
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> help help
+help [command]
+print out the help message, with [command] get help on that comamnd
+\end{verbatim}
+  \caption{Help on the help command}
+  \label{fig:help-on-help-example}
+\end{figure}
 
+\subsection{quit}
+\label{sec:quit}
+
+Quit the program.  All program state is lost.  In the next version it
+will be possible to save the state of your streams before exiting.
+
+\begin{figure}[h]
+  \centering
 \begin{verbatim}
 pdb> quit
 Bye
 localhost ? 
 \end{verbatim}
-
-Quit the program.  If you have modified any streams you will asked if
-you wish to save them before exiting.
+  \caption{Quit Command}
+  \label{fig:quit-example}
+\end{figure}
 
 \subsection{Loading and Saving Streams}
+\label{sec:loading-and-saving-streams}
 
 Each of the commands in this section works on a stream, which is the
 basic unit on which pdb operates.
 
-\subsubsection{create}
+\subsubsection{load}
+\label{sec:cmd-load}
 
 Read a new stream from a file, or open a network connection.
-Currently only \program{pcap} files are supported by the \verb|create|
+Currently only \program{pcap} files are supported by the \verb|load|
 command.  
 
-\subsubsection{delete}
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> load filename tests/test.out
+\end{verbatim}
+  \caption{Load example}
+  \label{fig:load-example}
+\end{figure}
 
-\subsubsection{info}
+\subsubsection{unload}
+\label{sec:cmd-unload}
+
+Unload a previously loaded stream.  If a numeric argument is supplied
+then \program{pdb} will attempt to unload that stream.  To see all the
+currently loaded streams use the \verb|info| command, discussed in
+Section~\ref{sec:cmd-info}.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> unload
+\end{verbatim}
+  \caption{Unload command}
+  \label{fig:unload-example}
+\end{figure}
 
 \subsection{Inspecting a Stream}
+\label{sec:inspecting-a-stream}
 
-\subsubsection{list}
+Once a \class{Stream} is loaded into \program{pdb} you will want to
+work with it in various ways.  In this section we cover all the
+commands that allow you to inspect and move through a \class{Stream}.
+
+\subsubsection{info}
+\label{sec:cmd-info}
+
+Get information on all the streams currently loaded into
+\program{pdb}.  The stream displayed in Figure~\ref{fig:info-example}
+has no breakpoints, was loaded from one of our standard test files,
+\file{tests/test.out}, has no filter set, and contains 63 packets.  We
+are currently at the first packet, position 0, in the stream.  The
+\verb|Type| is not yet supported.  The stream is an ISO Layer 2
+stream, with a \verb|Datalink| type of Ethernet, which has a 14 byte
+offset between the link layer header and the next protocol.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+Stream 0
+---------
+Breakpoints []
+File tests/test.out
+Filter 
+Number of packets: 63
+Current Position: 0
+Type
+Layer: 2
+Datalink: 1     Offset: 14
+\end{verbatim}
+  \caption{Getting info on a \class{Stream}}
+  \label{fig:info-example}
+\end{figure}
+
 
 \subsubsection{print}
+\label{sec:cmd-print}
+
+The \verb|print| command is used to show a single packet, either the
+current packet or another one in the same stream.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+0: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, 
+        sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, 
+        tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+\end{verbatim}
+  \caption{print command}
+  \label{fig:print-example}
+\end{figure}
+
+Figure~\ref{fig:print-example} shows the first, 0th, packet in one our
+supplied test files, \file{test.out}.  Packet 0 is an Ethernet frame
+containing an ARP request.  
+
+The \verb|print| command gives a concise example of how packets are
+displayed by \program{pdb}.  Packets are displayed from the lowest
+available layer, upwards towards the highest available layer, as
+viewed using the ISO standard for networking.  Ethernet is the lowest
+layer we have captured, and the only other data we have is the ARP
+packet placed, logically speaking, on top of it.  Each layer is
+displayed on its own line.
+
+With in each packet the fields are given somewhat human readable
+names, that is, if the human is acquainted with network protocols.
+Most of \program{pdb} assumes that the user has at least a passing
+understanding of networking and the ability to look up information
+about packet formats and field names on their own.
+
+\subsubsection{list}
+\label{sec:cmd-list}
+
+The \verb|list| command shows a subset of the packets in a stream.
+The number of packets shown is controlled by the \verb|list_length|
+setting, see Section~\ref{sec:cmd-set}, which defaults to 10.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> list
+0: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+
+1: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+
+2: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>  <IPv4: hlen: 5, protocol: 6, src: 167844872, tos: 0, dst: 1074628338, ttl: 64, length: 105, version: 4, flags: 2, offset: 0, checksum: 47703, id: 37679>
+  <TCP: reset: 6, reserved: 0, sequence: 3630104920L, ack: 1, checksum: 1430, offset: 8, syn: 12, urgent: 0, window: 65535, push: 3, ack_number: 4015249839L, dport: 993, sport: 49616, fin: 0, urg_pointer: 0>
+  <Data: payload: 13461827120112604152439673499521091613012183756744016516126079577203641068557009167112742657168772916671786032510888690444211521996639179562876754643964994L>
+\end{verbatim}
+  \caption{The list command}
+  \label{fig:list-example}
+\end{figure}
+
+In Figure~\ref{fig:list-example} we see a subset of the packets
+printed by the \verb|list| command.  Each packet is represented just
+as it is with the \verb|print| command, explained in
+Section~\ref{sec:cmd-print}.
 
 \subsubsection{next}
+\label{sec:cmd-next}
+
+To move within a \class{Stream} there are two commands provided, the
+\verb|next| command moves you forward, while the \verb|prev| command,
+Section~\ref{sec:cmd-prev} moves you backwards.  An optional numeric
+argument can be given to move more than 1 packet at a time.  As we see
+in Figure~\ref{fig:next-example} each time you use the \verb|next|
+command the packet you have jumped to is printed for you, to let you
+know where you are.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> print
+1: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+  <ARP: spa: 3538819329L, tpa: 3538819566L, hln: 6, pro: 2048, sha: '\x00\r\x022{\x9c', pln: 4, hrd: 1, tha: '\x00\x00\x00\x00\x00\x00', op: 1>
+pdb> next
+2: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>  <IPv4: hlen: 5, protocol: 6, src: 167844872, tos: 0, dst: 1074628338, ttl: 64, length: 105, version: 4, flags: 2, offset: 0, checksum: 47703, id: 37679>
+  <TCP: reset: 6, reserved: 0, sequence: 3630104920L, ack: 1, checksum: 1430, offset: 8, syn: 12, urgent: 0, window: 65535, push: 3, ack_number: 4015249839L, dport: 993, sport: 49616, fin: 0, urg_pointer: 0>
+  <Data: payload: 13461827120112604152439673499521091613012183756744016516126079577203641068557009167112742657168772916671786032510888690444211521996639179562876754643964994L>
+\end{verbatim}
+  \caption{The next command}
+  \label{fig:next-example}
+\end{figure}
+
+We were originally at packet number 1, shown by the \verb|print|
+command, and then after the \verb|next| command we are at packet
+number 2.  Attempts to jump past the end or beginning of the stream
+are reported as errors, and no change is made to your position in the
+\class{Stream}.
 
 \subsubsection{prev}
+\label{sec:cmd-prev}
 
-\subsection{Running a Strream}
+To move within a \class{Stream} there are two commands provided, the
+\verb|prev| command moves you backwards, while the \verb|next|
+command, Section~\ref{sec:cmd-next} moves you forwards.  An optional
+numeric argument can be given to move more than 1 packet at a time.
+Please refer to Section~\ref{sec:cmd-next} for more information.
+
+\subsection{Running a Stream}
+\label{sec:running-a-stream}
+
+Once a stream is loaded or captured you may want to replay the stream
+on an interface.  In almost all cases playing raw packets back on an
+interface requires special privileges, usually those associated with
+the \verb|root| user.  On modern Unix systems (FreeBSD, NetBSD,
+OpenBSD, MacOS X, Linux, Solaris, etc.) the best way to gain this
+privilege is via the \program{sudo} command.  If you do not understand
+what was just explained here, please stop, and find someone to explain
+it to you.
 
 \subsubsection{run}
+\label{sec:cmd-run}
+
+The \verb|run| command is used to play a stream of packets on an
+interface.  To use a network interface it must be specified when
+\program{pdb} is started, see Section~\ref{sec:debugger-options}, and
+at the moment the network interface used for output must match the
+type of interface on which the packets were captured.  A stream of
+packets captured on an Ethernet interface \emph{must} be run on an
+Ethernet interface and a stream of packets captures on the localhost,
+\verb|lo0|, interface \emph{must} be played back on the localhost
+interface.
+
+There is no output from the \verb|run| command to the CLI.  When
+playback is complete the command line returns, as seen in
+Figure~\ref{fig:run-example}.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> run
+pdb> 
+\end{verbatim}
+  \caption{The run command}
+  \label{fig:run-example}
+\end{figure}
 
 \subsubsection{break}
+\label{sec:cmd-break}
+
+One of the main features of any debugger is to be able to stop a
+program at a specific point in its execution.  Such a point is called
+a break point and the \verb|break| command is used to set a break point
+in a \class{Stream}.  Since \program{pdb} works with streams of
+packets, and not lines of source code, the breakpoints are set on
+packets, and not source code lines.
+
+The \verb|break| command sets a break point at a particular packet so
+that when the stream is \verb|run|, \program{pdb} will send packets up
+to the break point, and then stop, returning control to the user at the
+command line.
+
+In Figure\ref{fig:break-example} we have set a break point at packet
+number 5, and then run the stream using the \verb|run| command.  Just
+before \program{pdb} is about to transmit packet number 5 it stops,
+and returns control to the user.  The user can now inspect the packet,
+wait for an event in their program, or do something else with
+\program{pdb}.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> break 5
+pdb> run
+Breakpoint at packet 5
+5: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>  <IPv4: hlen: 5, protocol: 6, src: 167844872, tos: 0, dst: 1074628338, ttl: 64, length: 105, version: 4, flags: 2, offset: 0, checksum: 47701, id: 37681>
+  <TCP: reset: 6, reserved: 0, sequence: 3630104973L, ack: 1, checksum: 26250, offset: 8, syn: 12, urgent: 0, window: 65535, push: 3, ack_number: 4015250212L, dport: 993, sport: 49616, fin: 0, urg_pointer: 0>
+  <Data: payload: 13461827120112604152452570919187006348413092860400229175355376392182072120959206906515573156649336185430464894616649205210961904103139353088699445406157443L>
+pdb> 
+\end{verbatim}
+  \caption{The break command}
+  \label{fig:break-example}
+\end{figure}
 
 \subsubsection{continue}
+\label{sec:cmd-continue}
+
+When \program{pdb} reaches a break point, see
+Section~\ref{sec:cmd-break}, it halts transmitting the packet stream.
+If the user were to give the \verb|run| command again \program{pdb}
+would start transmitting packets from the 0th packet and then reach
+the same break point again.  The \verb|continue| command continues
+transmitting packets from the stream from the current point, the one
+it reached when it hit the break point.  With the \verb|continue|
+command it is possible to set and reach several breakpoints and to
+then move consistently through the packet stream.
 
 \subsection{Working with Packets}
+\label{sec:working-with-packets}
+
+In the previous sections we were working with streams of packets, but
+not with individual packets themselves.
 
 \subsubsection{send}
+\label{sec:cmd-send}
 
-\subsubsection{update}
+The \verb|send| command is used to send a single packet from the
+current stream.  When used without any arguments it sends the packet
+at the current position.  With a numeric argument it sends the packet
+at the numbered index in the stream.  No output is shown in the CLI
+when this command is used.
+
+\subsubsection{delete}
+\label{sec:cmd-delete}
+
+The \verb|delete| command is used to remove a packet from the packet
+stream.  When used without any arguments it deletes the packet at the
+current position.  With a numeric argument deletes the packet at the
+numbered index in the stream.  No output is shown in the CLI when this
+command is used.
 
 \subsection{Debugger Options}
+\label{sec:debugger-options}
+
+Various options may be globally set for the packet debugger.  The
+\verb|show| and \verb|set| commands allow the user to see the options
+and to modify them.
 
 \subsubsection{show}
+\label{sec:cmd-show}
+
+The \verb|show| command lists the values of all the possible packet
+debugger options.  Currently there are only two options,
+\verb|list_length| and \verb|layer|.  The \verb|list_length| option
+controls how many packets are displayed when the user invokes the
+\verb|list| command, See Section~\ref{sec:cmd-list}.  
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> show
+list_length = 10
+layer = -1
+\end{verbatim}
+  \caption{Global Debugger Options}
+  \label{fig:debugger-options}
+\end{figure}
 
 \subsubsection{set}
+\label{sec:cmd-set}
+
+The \verb|layer| option restricts packet output to a specific ISO
+layer.  The default value, -1, shows all layers simultaneously.  If
+the user wants to only inspect a particular layer of packets they can
+set this to any value from 1 through 7.
+Figure~\ref{fig:show-layer-example} shows an example of output
+restricted to the data-link layer, in this case, Ethernet.
+
+\begin{figure}[h]
+  \centering
+\begin{verbatim}
+pdb> set layer 2
+pdb> list
+0: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+1: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\xff\xff\xff\xff\xff\xff', type: 2054>
+2: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>
+3: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\x00\x17\xf2\xe8\x9a*', type: 2048>
+4: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>
+5: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>
+6: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\x00\x17\xf2\xe8\x9a*', type: 2048>
+7: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>
+8: <Ethernet: src: '\x00\x17\xf2\xe8\x9a*', dst: '\x00\r\x022{\x9c', type: 2048>
+9: <Ethernet: src: '\x00\r\x022{\x9c', dst: '\x00\x17\xf2\xe8\x9a*', type: 2048>
+\end{verbatim}
+  \caption{Output restricted to Layer 2, datalink}
+  \label{fig:show-layer-example}
+\end{figure}
 
 \end{document}
 \begin{thebibliography}{99} 

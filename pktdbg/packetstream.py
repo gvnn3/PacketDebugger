@@ -93,7 +93,8 @@ class Stream(object):
                     done = True
 
                 self.packets.append(packet)
-# XXX FIX PCS                self.file.close()
+
+            self.file.close()
             self.position = 0
 
             if (self.file.dlink == pcap.DLT_EN10MB):
@@ -102,22 +103,29 @@ class Stream(object):
                 self.layer = 3 # Network and above
 
     def __str__(self):
+        """give a human readable version of a Stream"""
         retval = ""
         retval += "Breakpoints %s\n" % self.breakpoints
-        retval += "File\n"
-        retval += "Filter\n"
+        retval += "File %s\n" % self.file.file.name
+        retval += "Filter %s\n" % self.file.file.filter
         retval += "Number of packets: %d\n" % len(self.packets)
         retval += "Current Position: %d\n" % self.position
         retval += "Type\n"
         retval += "Layer: %d\n" % self.layer
-        retval += "Datalink: %s\tOffset: %d" % (self.file.dlink, self.file.dloff)
+        if self.file.dlink == pcap.DLT_NULL:
+            datalink = "Localhost"
+        elif self.file.dlink == pcap.DLT_EN10MB:
+            datalink = "Ethernet"
+        else:
+            datalink = "Unknown"
+        retval += "Datalink: %s\tOffset: %d" % (datalink, self.file.dloff)
         return retval
 
     def __repr__(self):
         return "<pdb.Stream bp, file, filter, numpkts %d, position %d, type, layer %d>" % (len(self.packets), self.position, self.layer)
 
-    def run(self, index):
-        """Run the packet stream from the index."""
+    def run(self, index, ignore = -1):
+        """Run the packet stream from the index.  If ignore is set the ignore the breakpoint at that numbered index"""
         if ((self.file.dlink != self.outfile.dlink) and (self.outfile.dlink != pcap.DLT_NULL)):
             print "Input stream and output interface must agree."
             print "Input stream dlink %d, output interface dlink %d" % (self.file.dlink, self.outfile.dlink)
@@ -126,8 +134,10 @@ class Stream(object):
 
         self.position = index
         for packet in self.packets[index:len(self.packets)]:
-            if (self.position in self.breakpoints):
-                print "Breakpoint at %d" % self.position
+            if ((self.position in self.breakpoints) and
+                (self.position != ignore)):
+                print "Breakpoint at packet %d" % self.position
+                self.display(self.position, packet)
                 return
             packet = self.map(packet, self.outfile)
             try:
