@@ -3,6 +3,7 @@ include README
 include INSTALL
 include COPYRIGHT
 include CONTRIBUTORS
+include ChangeLog
 recursive-include tests *.py
 recursive-include tests *.out
 recursive-include scripts *.py

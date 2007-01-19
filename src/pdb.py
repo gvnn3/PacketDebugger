@@ -65,7 +65,7 @@ def main():
 
     """
 
-    version = "Alpha 0.1"
+    version = "Beta 0.1"
 
     # Standard argument parsing with the optparse module.
     # Currently there are no positional arguments with pdb.
