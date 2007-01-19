@@ -5,7 +5,7 @@
 # Author: George V. Neville-Neil
 #
 # Makefile for updating Packet Debugger web pages.
-FILES = *.html *.jpg *.py *.pdf
+FILES = *.html ../pdb.pdf html/
 
 install::
-	scp ${FILES} gnn@shell.sourceforge.net:/home/groups/p/pk/pktdbg/htdocs
+	scp -r ${FILES} gnn@shell.sourceforge.net:/home/groups/p/pk/pktdbg/htdocs
