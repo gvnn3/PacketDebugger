@@ -37,7 +37,7 @@
 # to read, write and manipulate packets.
 
 import pcs
-import pcap
+from pcs import pcap
 
 class InitError(Exception):
     def __init__(self, message):
@@ -147,6 +147,38 @@ class Stream(object):
                 return
             self.position += 1
 
+    def save(self, filename):
+        """Save the current stream to a new pcap file, given by name."""
+        try:
+            outfile = pcs.PcapDumpConnector(filename, self.file.dlink)
+        except:
+            print "Could not open file %s" % filename
+            return
+
+        print self.file.dlink
+        written = 0
+
+        class header(object):
+            sec = 0
+            usec=0
+            caplen=9000
+            
+        print outfile.file.dloff
+        for packet in self.packets:
+            packet = self.map(packet, outfile)
+#            print packet.bytes
+            print len(packet.bytes)
+            header.sec = 0
+            header.usec = 0
+            header.caplen = 9000
+            outfile.dump(packet.bytes, header)
+            written +=1 
+
+#        outfile.close()
+            
+        print "Wrote %d packets to %s file." % (written, filename)
+
+        
     def send(self, packet):
         """Send a single packet"""
         packet = self.map(packet, self.outfile)

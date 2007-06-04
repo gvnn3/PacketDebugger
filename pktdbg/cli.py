@@ -38,6 +38,7 @@
 import sys
 import cmd  # Used to implement our CLI
 import packetstream
+import packetgraph
 
 class Command(cmd.Cmd):
     """The top level  Command Line Interpreter for the packet debugger.
@@ -122,6 +123,33 @@ class Command(cmd.Cmd):
     def help_unload(self):
         print "unload (N)"
         print "Unload a Stream.  If N is given unload a specific stream otherwise unload the current one."
+
+    def do_save(self, args):
+        """Save the current stream to a new pcap file."""
+        if ((self.current == None) or (len(self.streams) <= 0)):
+            print "No streams.  Use the load command to create one."
+            return
+        if (args == ""):
+            print "Need to supply a file name to save the packets into."
+            self.help_save()
+            return
+
+        index = self.streams.index(self.current)
+        filename = ""
+        if (len(args) == 1):
+            filename = args[0]
+        elif (len(args) == 2):
+            index = self.numarg(args)
+            if (index == None):
+                self.help_save()
+                return
+            filename = args[1]
+
+        self.streams[index].save(filename)
+
+    def help_save(self):
+        print "save (N) filename"
+        print "Save a Stream to a new pcap file.  If N is given save a specific stream otherwise save the current one."
 
     def do_run(self, args):
         """Run the current stream or the one given in the index."""
@@ -276,6 +304,16 @@ class Command(cmd.Cmd):
         print "print (N)"
         print "print the current packet in the current stream or packet N in the current stream"
 
+    def do_graph(self, args):
+        packetgraph.graph(self.current.packets)
+
+    def help_graph(self):
+        print "graph"
+        print "output the current stream as a network time diagram"
+
+        #
+        # Packet manipluation
+        #
     def do_delete(self, args):
         "delete the current packet or the packet given by N in the current stream"
         if (args == ""):
