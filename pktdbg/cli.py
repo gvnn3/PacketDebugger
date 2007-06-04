@@ -305,7 +305,7 @@ class Command(cmd.Cmd):
         print "print the current packet in the current stream or packet N in the current stream"
 
     def do_graph(self, args):
-        packetgraph.graph(self.current.packets)
+        packetgraph.graph(self.current.packets, 2)
 
     def help_graph(self):
         print "graph"

@@ -54,11 +54,19 @@ def graph(packets, layer=1):
     graph.add_node(Node("Start"))
     first = True
     for packet in packets:
+        layer_index = layer
+        while layer_index > 1:
+            packet = packet.data
+            if packet == None:
+                break
+            layer_index -= 1
+        if packet == None:
+            continue
         if not hasattr(packet, srcname):
-            print "cannot determing packet source, skipping"
+            print "cannot determine packet source, skipping"
             continue
         if not hasattr(packet, dstname):
-            print "cannot determing packet destination, skipping"
+            print "cannot determine packet destination, skipping"
             continue
         
         src = packet.pretty(srcname)
@@ -70,41 +78,33 @@ def graph(packets, layer=1):
         snode = repr(index) + " " + src
         dnode = repr(index) + " " + dst
 
-        if src not in sources:
-            sources[src] = Subgraph(index)
-            sources[src].label = "Source"
-        else:
-            edge = Edge(snode, dnode)
-            edge.label = packet.println()
-            graph.add_edge(edge)
+        subgraph = Subgraph(repr(index))
+        subgraph.rank = "same"
+        edge = Edge(snode, dnode)
+        edge.label = packet.println()
+        subgraph.add_edge(edge)
             
-        if dst not in destinations:
-            destinations[dst] = Cluster("Destination")
-            destinations[dst].label = "Destination"
-        else:
-            edge = Edge(dnode, snode)
-            edge.label = packet.println()
-            graph.add_edge(edge)
-            
+        graph.add_subgraph(subgraph)
+
         if first == True:
             graph.add_edge(Edge("Start", snode))
             graph.add_edge(Edge("Start", dnode))
             first = False
             
         if prevsrc != "":
-            sources[src].add_edge(Edge(prevsrc, snode))
+            graph.add_edge(Edge(prevsrc, snode))
         if prevdst != "":
-           destinations[dst].add_edge(Edge(prevdst, dnode))
+           graph.add_edge(Edge(prevdst, dnode))
         
         prevsrc = snode
         prevdst = dnode
 
         index += 1
 
-    for subgraph in sources.values():
-         graph.add_subgraph(subgraph)
-    for subgraph in destinations.values():
-         graph.add_subgraph(subgraph)
+#     for subgraph in sources.values():
+#          graph.add_subgraph(subgraph)
+#     for subgraph in destinations.values():
+#          graph.add_subgraph(subgraph)
 
     graph.write_gif("graph.gif", prog="dot")
     graph.write_raw("graph.dot", prog="dot")
