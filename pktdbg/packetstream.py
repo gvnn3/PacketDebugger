@@ -206,6 +206,8 @@ class Stream(object):
             print
             index+=1
 
+        self.position = index
+
     def display(self, index, packet):
         """Method for displaying packets."""
         if packet == None:
